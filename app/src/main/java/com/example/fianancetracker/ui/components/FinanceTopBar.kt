@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,8 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import com.example.fianancetracker.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -33,7 +33,7 @@ import java.util.Locale
 @Composable
 fun FinanceTopBar(
     onCalendarClick: () -> Unit = {},
-    actionIcon1: ImageVector = Icons.Filled.Analytics,
+    actionIcon1: ImageVector = ImageVector.vectorResource(R.drawable.analytics),
     actionContentDescription1: String = "Аналитика",
     onAction1Click: () -> Unit = {},
     actionIcon2: ImageVector = Icons.Filled.Tune,

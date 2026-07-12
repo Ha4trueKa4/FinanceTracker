@@ -32,7 +32,7 @@ fun MainAppNavGraph(
         composable(Screen.Expenses.route) {
             ExpensesScreen()
         }
-        composable(Screen.Income.route) {
+        composable(Screen.Incomes.route) {
             IncomeScreen()
         }
         composable(Screen.Accounts.route) {

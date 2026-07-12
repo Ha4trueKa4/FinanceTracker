@@ -45,7 +45,7 @@ fun MainScreen() {
         bottomBar = {
             if (currentDestination?.route != Screen.Splash.route) {
                 NavigationBar {
-                    Screen.bottomNavItems.forEach { item ->
+                    Screen.bottomNavItems().forEach { item ->
                         val selected = currentDestination?.hierarchy?.any {
                             it.route == item.screen.route
                         } == true

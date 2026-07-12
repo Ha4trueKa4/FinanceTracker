@@ -1,5 +1,12 @@
 package com.example.fianancetracker.model
 
+import com.example.fianancetracker.model.account.Account
+import com.example.fianancetracker.model.account.AccountType
+import com.example.fianancetracker.model.expense.Expense
+import com.example.fianancetracker.model.expense.ExpenseCategory
+import com.example.fianancetracker.model.income.Income
+import com.example.fianancetracker.model.income.IncomeCategory
+
 object MockData {
 
     val expenseItems = listOf(
