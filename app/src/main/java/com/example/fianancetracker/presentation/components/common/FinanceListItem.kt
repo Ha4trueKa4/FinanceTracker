@@ -1,4 +1,4 @@
-package com.example.fianancetracker.presentation.components
+package com.example.fianancetracker.presentation.components.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

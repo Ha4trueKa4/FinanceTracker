@@ -1,4 +1,4 @@
-package com.example.fianancetracker.presentation.components
+package com.example.fianancetracker.presentation.components.common
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

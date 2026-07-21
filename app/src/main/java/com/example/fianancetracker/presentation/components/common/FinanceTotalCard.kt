@@ -1,4 +1,4 @@
-package com.example.fianancetracker.presentation.components
+package com.example.fianancetracker.presentation.components.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

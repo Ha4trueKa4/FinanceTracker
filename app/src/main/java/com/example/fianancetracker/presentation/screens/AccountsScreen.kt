@@ -3,20 +3,16 @@ package com.example.fianancetracker.presentation.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.flow.collectLatest
 import com.example.fianancetracker.domain.account.AccountType
-import com.example.fianancetracker.presentation.components.FinanceEmptyState
-import com.example.fianancetracker.presentation.components.FinanceErrorState
-import com.example.fianancetracker.presentation.components.FinanceListContent
-import com.example.fianancetracker.presentation.components.FinanceLoadingState
-import com.example.fianancetracker.presentation.components.FinanceTotalCard
+import com.example.fianancetracker.presentation.components.common.FinanceEmptyState
+import com.example.fianancetracker.presentation.components.common.FinanceErrorState
+import com.example.fianancetracker.presentation.components.common.FinanceListContent
+import com.example.fianancetracker.presentation.components.common.FinanceLoadingState
+import com.example.fianancetracker.presentation.components.common.FinanceTotalCard
 import com.example.fianancetracker.presentation.model.ListItemModel
 import com.example.fianancetracker.presentation.utils.toThousand
 import com.example.fianancetracker.presentation.viewmodel.AccountsViewModel
@@ -26,22 +22,9 @@ import com.example.fianancetracker.presentation.viewmodel.UiState
 @Composable
 fun AccountsScreen(
     viewModel: AccountsViewModel,
-    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.errorEvent.collectLatest { error ->
-            if (error != null) {
-                snackbarHostState.showSnackbar(
-                    message = error,
-                    actionLabel = "Повторить"
-                )
-                viewModel.clearError()
-            }
-        }
-    }
 
     when (val state = uiState) {
         is UiState.Loading -> {

@@ -9,5 +9,6 @@ data class Income(
     val category: Category,
     val date: String,
     val description: String = "",
-    val createdAt: String = ""
+    val createdAt: String = "",
+    val accountName: String = ""
 )

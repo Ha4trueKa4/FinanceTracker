@@ -13,6 +13,7 @@ sealed class Screen(val route: String) {
     data object Expenses : Screen("expenses")
     data object Incomes : Screen("income")
     data object Accounts : Screen("accounts")
+    data object Analytics : Screen("analytics")
 
     companion object {
         data class BottomNavItem(
@@ -27,5 +28,9 @@ sealed class Screen(val route: String) {
             BottomNavItem(Incomes, "Доходы", Icons.AutoMirrored.Filled.TrendingUp),
             BottomNavItem(Accounts, "Счета", ImageVector.vectorResource(R.drawable.accounts)),
         )
+
+        private val bottomNavRoutes = setOf("expenses", "income", "accounts")
+
+        fun isBottomNavRoute(route: String?): Boolean = route in bottomNavRoutes
     }
 }

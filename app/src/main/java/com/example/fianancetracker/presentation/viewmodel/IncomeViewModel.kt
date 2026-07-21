@@ -16,9 +16,6 @@ class IncomeViewModel(
     private val _uiState = MutableStateFlow<UiState<List<Income>>>(UiState.Loading)
     val uiState: StateFlow<UiState<List<Income>>> = _uiState.asStateFlow()
 
-    private val _errorEvent = MutableStateFlow<String?>(null)
-    val errorEvent: StateFlow<String?> = _errorEvent.asStateFlow()
-
     init {
         loadIncomes()
     }
@@ -34,13 +31,10 @@ class IncomeViewModel(
                     UiState.Content(incomes)
                 }
             } catch (e: Exception) {
-                _uiState.value = UiState.Error(e.message ?: "Неизвестная ошибка")
-                _errorEvent.value = e.message ?: "Неизвестная ошибка"
+                _uiState.value = UiState.Error(
+                    if (e is java.io.IOException) "Нет подключения к интернету" else (e.message ?: "Неизвестная ошибка")
+                )
             }
         }
-    }
-
-    fun clearError() {
-        _errorEvent.value = null
     }
 }

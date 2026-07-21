@@ -33,7 +33,8 @@ fun TransactionResponseDto.toExpense(): Expense {
         amount = amount,
         category = cat,
         date = formattedDate,
-        description = comment ?: ""
+        description = comment ?: "",
+        accountName = account.name
     )
 }
 

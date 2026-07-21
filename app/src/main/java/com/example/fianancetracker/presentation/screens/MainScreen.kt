@@ -9,12 +9,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,8 +20,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.fianancetracker.presentation.navigation.MainAppNavGraph
 import com.example.fianancetracker.presentation.navigation.Screen
-import com.example.fianancetracker.presentation.components.FinanceFloatingActionButton
-import com.example.fianancetracker.presentation.components.FinanceTopBar
+import com.example.fianancetracker.presentation.components.common.FinanceFloatingActionButton
+import com.example.fianancetracker.presentation.components.common.FinanceTopBar
 
 
 @Composable
@@ -32,13 +29,11 @@ fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
-            if (currentDestination?.route != Screen.Splash.route) {
+            if (Screen.isBottomNavRoute(currentDestination?.route)) {
                 Box {
                     NavigationBar {
                         Screen.bottomNavItems().forEach { item ->
@@ -72,12 +67,24 @@ fun MainScreen() {
                 }
             }
         },
-        floatingActionButton = { FinanceFloatingActionButton({})},
-        topBar = { FinanceTopBar {  } }
+        floatingActionButton = {
+            if (Screen.isBottomNavRoute(currentDestination?.route)) {
+                FinanceFloatingActionButton({})
+            }
+        },
+        topBar = {
+            if (Screen.isBottomNavRoute(currentDestination?.route)) {
+                FinanceTopBar(
+                    onCalendarClick = {},
+                    onAction1Click = {
+                        navController.navigate(Screen.Analytics.route)
+                    }
+                )
+            }
+        }
     ) { innerPadding ->
         MainAppNavGraph(
             navController = navController,
-            snackbarHostState = snackbarHostState,
             modifier = Modifier.padding(innerPadding)
         )
     }
