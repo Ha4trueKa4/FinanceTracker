@@ -34,25 +34,21 @@ import androidx.compose.ui.unit.sp
 import com.example.fianancetracker.R
 import com.example.fianancetracker.domain.analytics.Period
 import com.example.fianancetracker.domain.analytics.TransactionType
-import com.example.fianancetracker.domain.category.Category
-import com.example.fianancetracker.domain.expense.Expense
-import com.example.fianancetracker.domain.income.Income
 import com.example.fianancetracker.presentation.components.bottom_sheets.AccountBottomSheet
 import com.example.fianancetracker.presentation.components.bottom_sheets.CategoryBottomSheet
 import com.example.fianancetracker.presentation.components.bottom_sheets.CustomDateRangeSheet
 import com.example.fianancetracker.presentation.components.bottom_sheets.DetailBottomSheet
 import com.example.fianancetracker.presentation.components.bottom_sheets.FilterBottomSheet
 import com.example.fianancetracker.presentation.components.bottom_sheets.PeriodBottomSheet
-import com.example.fianancetracker.presentation.components.filters.FilterRow
 import com.example.fianancetracker.presentation.components.common.FinanceEmptyState
 import com.example.fianancetracker.presentation.components.common.FinanceErrorState
 import com.example.fianancetracker.presentation.components.common.FinanceListItem
 import com.example.fianancetracker.presentation.components.common.FinanceLoadingState
 import com.example.fianancetracker.presentation.components.common.FinancePieChart
-import com.example.fianancetracker.presentation.components.common.PieChartSlice
-import com.example.fianancetracker.presentation.model.ListItemModel
+import com.example.fianancetracker.presentation.components.filters.FilterRow
 import com.example.fianancetracker.presentation.utils.toThousand
 import com.example.fianancetracker.presentation.viewmodel.AnalyticsViewModel
+import com.example.fianancetracker.presentation.viewmodel.UiState
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,116 +93,35 @@ fun AnalyticsScreen(
         },
         modifier = modifier
     ) { padding ->
-        when {
-            state.isLoading -> {
+        when (val s = state) {
+            is UiState.Loading -> {
                 FinanceLoadingState(modifier = Modifier.padding(padding))
             }
 
-            state.error != null -> {
+            is UiState.Error -> {
                 FinanceErrorState(
-                    message = state.error ?: "",
+                    message = s.message,
                     onRetry = { viewModel.loadData() },
                     modifier = Modifier.padding(padding)
                 )
             }
 
-            else -> {
-                val allTransactions = state.filteredExpenses + state.filteredIncomes
-                val combinedItems = when (state.filter.type) {
-                    TransactionType.EXPENSE -> state.filteredExpenses
-                    TransactionType.INCOME -> state.filteredIncomes
-                    TransactionType.ALL -> allTransactions
-                }.sortedByDescending { item ->
-                    when (item) {
-                        is Expense -> item.date
-                        is Income -> item.date
-                        else -> ""
-                    }
-                }
+            is UiState.Empty -> {
+                FinanceEmptyState(
+                    message = "Нет операций за выбранный период",
+                    modifier = Modifier.padding(padding)
+                )
+            }
 
-                if (combinedItems.isEmpty()) {
+            is UiState.Content -> {
+                val data = s.data
+
+                if (data.items.isEmpty()) {
                     FinanceEmptyState(
                         message = "Нет операций за выбранный период",
                         modifier = Modifier.padding(padding)
                     )
                 } else {
-                    val totalAmount = combinedItems.sumOf {
-                        when (it) {
-                            is Expense -> it.amount
-                            is Income -> it.amount
-                            else -> 0.0
-                        }
-                    }
-
-                    val categoryTotals = combinedItems
-                        .groupBy {
-                            when (it) {
-                                is Expense -> it.category
-                                is Income -> it.category
-                                else -> return@groupBy null
-                            }
-                        }
-                        .mapNotNull { (category, items) ->
-                            category?.let { cat ->
-                                cat to items.sumOf { item ->
-                                    when (item) {
-                                        is Expense -> item.amount
-                                        is Income -> item.amount
-                                        else -> 0.0
-                                    }
-                                }
-                            }
-                        }
-                        .sortedByDescending { it.second }
-
-                    val slices = categoryTotals
-                        .filter { it.second > 0 }
-                        .map { (category, amount) ->
-                            PieChartSlice(
-                                label = category.name,
-                                emoji = category.emoji,
-                                amount = amount,
-                                color = Color.Unspecified,
-                                percentage = if (totalAmount > 0) (amount / totalAmount * 100).toFloat() else 0f
-                            )
-                        }
-
-                    val availableCategories = categoryTotals.map { it.first }
-
-                    val items = combinedItems.mapNotNull { transaction ->
-                        val (id, title, amount, category, accountName) = when (transaction) {
-                            is Expense -> listOf(
-                                transaction.id,
-                                transaction.title,
-                                transaction.amount,
-                                transaction.category,
-                                transaction.accountName
-                            )
-
-                            is Income -> listOf(
-                                transaction.id,
-                                transaction.title,
-                                transaction.amount,
-                                transaction.category,
-                                transaction.accountName
-                            )
-
-                            else -> return@mapNotNull null
-                        }
-                        ListItemModel(
-                            id = id as String,
-                            lead = ListItemModel.Lead(emoji = (category as Category).emoji),
-                            content = ListItemModel.Content(
-                                title = title as String,
-                                subtitle = accountName as String
-                            ),
-                            trail = ListItemModel.Trail(
-                                amount = toThousand(amount as Double),
-                                isPositive = (amount as Double) >= 0
-                            )
-                        )
-                    }
-
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -214,8 +129,8 @@ fun AnalyticsScreen(
                     ) {
                         item {
                             FinancePieChart(
-                                slices = slices,
-                                totalAmount = toThousand(totalAmount),
+                                slices = data.slices,
+                                totalAmount = toThousand(data.totalAmount),
                                 totalLabel = "Всего за период",
                                 onClick = { showDetailSheet = true },
                                 modifier = Modifier.fillMaxWidth()
@@ -228,7 +143,7 @@ fun AnalyticsScreen(
                             FilterRow(
                                 icon = ImageVector.vectorResource(id = R.drawable.ic_filter_type),
                                 label = "Тип",
-                                badgeText = when (state.filter.type) {
+                                badgeText = when (data.filter.type) {
                                     TransactionType.ALL -> "Всё"
                                     TransactionType.EXPENSE -> "Расходы"
                                     TransactionType.INCOME -> "Доходы"
@@ -242,14 +157,14 @@ fun AnalyticsScreen(
                             FilterRow(
                                 icon = ImageVector.vectorResource(id = R.drawable.ic_filter_period),
                                 label = "Период",
-                                badgeText = when (state.filter.period) {
+                                badgeText = when (data.filter.period) {
                                     Period.WEEK -> "За неделю"
                                     Period.MONTH -> "За месяц"
                                     Period.QUARTER -> "За квартал"
                                     Period.YEAR -> "За год"
                                     Period.CUSTOM -> {
-                                        val start = state.filter.customStartDate
-                                        val end = state.filter.customEndDate
+                                        val start = data.filter.customStartDate
+                                        val end = data.filter.customEndDate
                                         val f = DateTimeFormatter.ofPattern("dd.MM.yyyy")
                                         if (start != null && end != null) {
                                             "${start.format(f)} – ${end.format(f)}"
@@ -267,11 +182,11 @@ fun AnalyticsScreen(
                             FilterRow(
                                 icon = ImageVector.vectorResource(id = R.drawable.ic_filter_category),
                                 label = "Статьи",
-                                badgeText = if (state.filter.selectedCategoryIds.isEmpty()) {
+                                badgeText = if (data.filter.selectedCategoryIds.isEmpty()) {
                                     "Все"
                                 } else {
-                                    state.filter.selectedCategoryIds.mapNotNull { id ->
-                                        state.categories.find { it.id == id }?.name
+                                    data.filter.selectedCategoryIds.mapNotNull { id ->
+                                        data.categories.find { it.id == id }?.name
                                     }.joinToString(", ")
                                 },
                                 onClick = { showCategorySheet = true }
@@ -283,7 +198,7 @@ fun AnalyticsScreen(
                             FilterRow(
                                 icon = ImageVector.vectorResource(id = R.drawable.ic_filter_account),
                                 label = "Счёт",
-                                badgeText = state.filter.selectedAccountName
+                                badgeText = data.filter.selectedAccountName
                                     ?: "Все счета",
                                 onClick = { showAccountSheet = true }
                             )
@@ -301,7 +216,7 @@ fun AnalyticsScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                         }
 
-                        items(items, key = { it.id }) { item ->
+                        items(data.items, key = { it.id }) { item ->
                             FinanceListItem(item = item)
                             HorizontalDivider(
                                 thickness = 0.5.dp,
@@ -314,93 +229,92 @@ fun AnalyticsScreen(
 
                     if (showDetailSheet) {
                         DetailBottomSheet(
-                            slices = slices,
-                            totalAmount = totalAmount,
+                            slices = data.slices,
+                            totalAmount = data.totalAmount,
                             onDismiss = { showDetailSheet = false }
                         )
                     }
 
                     if (showCategorySheet) {
                         CategoryBottomSheet(
-                            categories = availableCategories,
-                            selectedIds = state.filter.selectedCategoryIds,
+                            categories = data.categories,
+                            selectedIds = data.filter.selectedCategoryIds,
                             onDone = { ids ->
-                                viewModel.updateFilter(state.filter.copy(selectedCategoryIds = ids))
+                                viewModel.updateFilter(data.filter.copy(selectedCategoryIds = ids))
                                 showCategorySheet = false
                             },
                             onDismiss = { showCategorySheet = false }
                         )
                     }
                 }
+
+                if (showTypeSheet) {
+                    FilterBottomSheet(
+                        title = "Тип",
+                        options = listOf("Расходы", "Доходы", "Всё"),
+                        selectedOption = when (data.filter.type) {
+                            TransactionType.EXPENSE -> "Расходы"
+                            TransactionType.INCOME -> "Доходы"
+                            TransactionType.ALL -> "Всё"
+                        },
+                        onSelect = { option ->
+                            val newType = when (option) {
+                                "Расходы" -> TransactionType.EXPENSE
+                                "Доходы" -> TransactionType.INCOME
+                                else -> TransactionType.ALL
+                            }
+                            viewModel.updateFilter(data.filter.copy(type = newType))
+                            showTypeSheet = false
+                        },
+                        onDismiss = { showTypeSheet = false }
+                    )
+                }
+
+                if (showPeriodSheet) {
+                    PeriodBottomSheet(
+                        filter = data.filter,
+                        onApply = { newFilter ->
+                            viewModel.updateFilter(newFilter)
+                            showPeriodSheet = false
+                        },
+                        onCustomSelected = {
+                            showPeriodSheet = false
+                            showCustomDateSheet = true
+                        },
+                        onDismiss = { showPeriodSheet = false }
+                    )
+                }
+
+                if (showCustomDateSheet) {
+                    CustomDateRangeSheet(
+                        initialStartDate = data.filter.customStartDate,
+                        initialEndDate = data.filter.customEndDate,
+                        onApply = { startDate, endDate ->
+                            viewModel.updateFilter(
+                                data.filter.copy(
+                                    period = Period.CUSTOM,
+                                    customStartDate = startDate,
+                                    customEndDate = endDate
+                                )
+                            )
+                            showCustomDateSheet = false
+                        },
+                        onDismiss = { showCustomDateSheet = false }
+                    )
+                }
+
+                if (showAccountSheet) {
+                    AccountBottomSheet(
+                        accounts = data.accounts,
+                        selectedAccountName = data.filter.selectedAccountName,
+                        onSelect = { accountName ->
+                            viewModel.updateFilter(data.filter.copy(selectedAccountName = accountName))
+                            showAccountSheet = false
+                        },
+                        onDismiss = { showAccountSheet = false }
+                    )
+                }
             }
         }
-    }
-
-    if (showTypeSheet) {
-        FilterBottomSheet(
-            title = "Тип",
-            options = listOf("Расходы", "Доходы", "Всё"),
-            selectedOption = when (state.filter.type) {
-                TransactionType.EXPENSE -> "Расходы"
-                TransactionType.INCOME -> "Доходы"
-                TransactionType.ALL -> "Всё"
-            },
-            onSelect = { option ->
-                val newType = when (option) {
-                    "Расходы" -> TransactionType.EXPENSE
-                    "Доходы" -> TransactionType.INCOME
-                    "Всё" -> TransactionType.ALL
-                    else -> TransactionType.ALL
-                }
-                viewModel.updateFilter(state.filter.copy(type = newType))
-                showTypeSheet = false
-            },
-            onDismiss = { showTypeSheet = false }
-        )
-    }
-
-    if (showPeriodSheet) {
-        PeriodBottomSheet(
-            filter = state.filter,
-            onApply = { newFilter ->
-                viewModel.updateFilter(newFilter)
-                showPeriodSheet = false
-            },
-            onCustomSelected = {
-                showPeriodSheet = false
-                showCustomDateSheet = true
-            },
-            onDismiss = { showPeriodSheet = false }
-        )
-    }
-
-    if (showCustomDateSheet) {
-        CustomDateRangeSheet(
-            initialStartDate = state.filter.customStartDate,
-            initialEndDate = state.filter.customEndDate,
-            onApply = { startDate, endDate ->
-                viewModel.updateFilter(
-                    state.filter.copy(
-                        period = Period.CUSTOM,
-                        customStartDate = startDate,
-                        customEndDate = endDate
-                    )
-                )
-                showCustomDateSheet = false
-            },
-            onDismiss = { showCustomDateSheet = false }
-        )
-    }
-
-    if (showAccountSheet) {
-        AccountBottomSheet(
-            accounts = state.accounts,
-            selectedAccountName = state.filter.selectedAccountName,
-            onSelect = { accountName ->
-                viewModel.updateFilter(state.filter.copy(selectedAccountName = accountName))
-                showAccountSheet = false
-            },
-            onDismiss = { showAccountSheet = false }
-        )
     }
 }

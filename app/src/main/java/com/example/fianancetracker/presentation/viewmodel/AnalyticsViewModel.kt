@@ -1,33 +1,43 @@
 package com.example.fianancetracker.presentation.viewmodel
 
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fianancetracker.domain.account.Account
 import com.example.fianancetracker.domain.analytics.AnalyticsFilter
+import com.example.fianancetracker.domain.analytics.TransactionType
 import com.example.fianancetracker.domain.category.Category
 import com.example.fianancetracker.domain.expense.Expense
 import com.example.fianancetracker.domain.income.Income
-import com.example.fianancetracker.domain.repository.AccountRepository
-import com.example.fianancetracker.domain.repository.ExpenseRepository
-import com.example.fianancetracker.domain.repository.IncomeRepository
+import com.example.fianancetracker.domain.repository.AnalyticsRepository
+import com.example.fianancetracker.domain.transaction.Transaction
+import com.example.fianancetracker.presentation.components.common.PieChartSlice
+import com.example.fianancetracker.presentation.model.ListItemModel
+import com.example.fianancetracker.presentation.utils.toThousand
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 class AnalyticsViewModel(
-    private val expenseRepository: ExpenseRepository,
-    private val incomeRepository: IncomeRepository,
-    private val accountRepository: AccountRepository
+    private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(AnalyticsFilter())
     val filter: StateFlow<AnalyticsFilter> = _filter.asStateFlow()
 
-    private val _state = MutableStateFlow(AnalyticsState())
-    val state: StateFlow<AnalyticsState> = _state.asStateFlow()
+    private val _state = MutableStateFlow<UiState<AnalyticsState>>(UiState.Loading)
+    val state: StateFlow<UiState<AnalyticsState>> = _state.asStateFlow()
+
+    private var allExpenses: List<Expense> = emptyList()
+    private var allIncomes: List<Income> = emptyList()
+    private var allAccounts: List<Account> = emptyList()
+    private var allCategories: List<Category> = emptyList()
+
+    private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
     init {
         loadData()
@@ -40,27 +50,17 @@ class AnalyticsViewModel(
 
     fun loadData() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _state.value = UiState.Loading
             try {
-                val accounts = accountRepository.getAccounts()
-                val expenses = expenseRepository.getExpenses()
-                val incomes = incomeRepository.getIncomes()
-
-                val allCategories = (expenses.map { it.category } + incomes.map { it.category })
-                    .distinctBy { it.id }
-
-                _state.value = _state.value.copy(
-                    accounts = accounts,
-                    categories = allCategories,
-                    allExpenses = expenses,
-                    allIncomes = incomes,
-                    isLoading = false
-                )
+                val data = analyticsRepository.getAnalyticsData()
+                allExpenses = data.expenses
+                allIncomes = data.incomes
+                allAccounts = data.accounts
+                allCategories = data.categories
                 applyFilters()
             } catch (e: Exception) {
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    error = if (e is java.io.IOException) "Нет подключения к интернету" else "Неизвестная ошибка"
+                _state.value = UiState.Error(
+                    if (e is IOException) "Нет подключения к интернету" else "Неизвестная ошибка"
                 )
             }
         }
@@ -68,41 +68,74 @@ class AnalyticsViewModel(
 
     private fun applyFilters() {
         val currentFilter = _filter.value
-        val currentState = _state.value
+        val filteredExpenses = allExpenses.filter { matchesFilter(it, currentFilter) }
+        val filteredIncomes = allIncomes.filter { matchesFilter(it, currentFilter) }
 
-        val filteredExpenses = currentState.allExpenses.filter { expense ->
-            matchesFilter(expense.date, expense.category, expense.accountName, currentFilter)
-        }
-        val filteredIncomes = currentState.allIncomes.filter { income ->
-            matchesFilter(income.date, income.category, income.accountName, currentFilter)
+        val combinedItems: List<Transaction> = when (currentFilter.type) {
+            TransactionType.EXPENSE -> filteredExpenses
+            TransactionType.INCOME -> filteredIncomes
+            TransactionType.ALL -> filteredExpenses + filteredIncomes
+        }.sortedByDescending { parseDate(it.date) ?: LocalDate.MIN }
+
+        val totalAmount = combinedItems.sumOf { it.amount }
+
+        val categoryTotals = combinedItems
+            .groupBy { it.category }
+            .mapValues { (_, items) -> items.sumOf { it.amount } }
+            .entries
+            .sortedByDescending { it.value }
+
+        val slices = categoryTotals
+            .filter { it.value > 0 }
+            .map { (category, amount) ->
+                PieChartSlice(
+                    label = category.name,
+                    emoji = category.emoji,
+                    amount = amount,
+                    color = Color.Unspecified,
+                    percentage = if (totalAmount > 0) (amount / totalAmount * 100).toFloat() else 0f
+                )
+            }
+
+        val items = combinedItems.map { transaction ->
+            ListItemModel(
+                id = transaction.id,
+                lead = ListItemModel.Lead(emoji = transaction.category.emoji),
+                content = ListItemModel.Content(
+                    title = transaction.title,
+                    subtitle = transaction.accountName
+                ),
+                trail = ListItemModel.Trail(
+                    amount = toThousand(transaction.amount),
+                    isPositive = transaction.amount >= 0
+                )
+            )
         }
 
-        _state.value = currentState.copy(
-            filteredExpenses = filteredExpenses,
-            filteredIncomes = filteredIncomes,
-            filter = currentFilter
+        _state.value = UiState.Content(
+            AnalyticsState(
+                accounts = allAccounts,
+                categories = allCategories,
+                slices = slices,
+                items = items,
+                totalAmount = totalAmount,
+                filter = currentFilter
+            )
         )
     }
 
-    private fun matchesFilter(
-        date: String,
-        category: Category,
-        accountName: String,
-        filter: AnalyticsFilter
-    ): Boolean {
-        if (filter.selectedCategoryIds.isNotEmpty() && category.id !in filter.selectedCategoryIds) {
+    private fun matchesFilter(transaction: Transaction, filter: AnalyticsFilter): Boolean {
+        if (filter.selectedCategoryIds.isNotEmpty() && transaction.category.id !in filter.selectedCategoryIds) {
             return false
         }
-        if (filter.selectedAccountName != null && accountName != filter.selectedAccountName) {
+        if (filter.selectedAccountName != null && transaction.accountName != filter.selectedAccountName) {
             return false
         }
-        if (!isDateInRange(date, filter.effectiveStartDate, filter.effectiveEndDate)) {
+        if (!isDateInRange(transaction.date, filter.effectiveStartDate, filter.effectiveEndDate)) {
             return false
         }
         return true
     }
-
-    private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
     private fun isDateInRange(dateStr: String, start: LocalDate, end: LocalDate): Boolean {
         return try {
@@ -111,5 +144,11 @@ class AnalyticsViewModel(
         } catch (_: Exception) {
             true
         }
+    }
+
+    private fun parseDate(dateStr: String): LocalDate? = try {
+        LocalDate.parse(dateStr, dateFormatter)
+    } catch (_: Exception) {
+        null
     }
 }

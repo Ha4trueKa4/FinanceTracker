@@ -11,5 +11,5 @@ val viewModelModule = module {
     viewModel { ExpensesViewModel(get()) }
     viewModel { IncomeViewModel(get()) }
     viewModel { AccountsViewModel(get()) }
-    viewModel { AnalyticsViewModel(get(), get(), get()) }
+    viewModel { AnalyticsViewModel(get()) }
 }

@@ -1,14 +1,15 @@
 package com.example.fianancetracker.domain.expense
 
 import com.example.fianancetracker.domain.category.Category
+import com.example.fianancetracker.domain.transaction.Transaction
 
 data class Expense(
-    val id: String,
-    val title: String,
-    val amount: Double,
-    val category: Category,
-    val date: String,
+    override val id: String,
+    override val title: String,
+    override val amount: Double,
+    override val category: Category,
+    override val date: String,
     val description: String = "",
     val createdAt: String = "",
-    val accountName: String = ""
-)
+    override val accountName: String = ""
+) : Transaction
