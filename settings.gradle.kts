@@ -24,3 +24,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "FiananceTracker"
 include(":app")
+include(":core:domain")
+include(":core:data")
+include(":core:ui")
+include(":feature:main")
+include(":feature:analytics")

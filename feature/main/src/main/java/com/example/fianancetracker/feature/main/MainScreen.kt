@@ -1,0 +1,95 @@
+package com.example.fianancetracker.feature.main
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import com.example.fianancetracker.core.ui.components.FinanceEmptyState
+import com.example.fianancetracker.core.ui.components.FinanceErrorState
+import com.example.fianancetracker.core.ui.components.FinanceFloatingActionButton
+import com.example.fianancetracker.core.ui.components.FinanceListContent
+import com.example.fianancetracker.core.ui.components.FinanceLoadingState
+import com.example.fianancetracker.core.ui.components.FinanceTopBar
+import com.example.fianancetracker.core.ui.components.FinanceTotalCard
+import org.koin.androidx.compose.koinViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(
+    onNavigateToAnalytics: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel = koinViewModel(),
+) {
+    val state by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            FinanceTopBar(
+                dateText = state.dateLabel,
+                onCalendarClick = {},
+                onAction1Click = onNavigateToAnalytics
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                MainTab.entries.forEach { tab ->
+                    NavigationBarItem(
+                        selected = state.selectedTab == tab,
+                        onClick = { viewModel.selectTab(tab) },
+                        icon = { Icon(imageVector = tab.icon(), contentDescription = tab.title) },
+                        label = { Text(tab.title) }
+                    )
+                }
+            }
+        },
+        floatingActionButton = {
+            FinanceFloatingActionButton({ viewModel.addTransaction() })
+        }
+    ) { padding ->
+        val contentModifier = Modifier.padding(padding)
+        when (val content = state.current) {
+            TabContent.NotLoaded, TabContent.Loading -> FinanceLoadingState(modifier = contentModifier)
+            is TabContent.Error -> FinanceErrorState(
+                message = content.message,
+                onRetry = { viewModel.reloadCurrent() },
+                modifier = contentModifier
+            )
+            is TabContent.Empty -> FinanceEmptyState(message = content.message, modifier = contentModifier)
+            is TabContent.Content -> Column(modifier = contentModifier.fillMaxSize()) {
+                FinanceTotalCard(label = content.totalLabel, amount = content.totalAmount)
+                FinanceListContent(
+                    items = content.items,
+                    modifier = Modifier.fillMaxSize().weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainTab.icon(): ImageVector = when (this) {
+    MainTab.EXPENSES -> ImageVector.vectorResource(R.drawable.expenses)
+    MainTab.INCOMES -> Icons.AutoMirrored.Filled.TrendingUp
+    MainTab.ACCOUNTS -> ImageVector.vectorResource(R.drawable.accounts)
+}
+
+private val MainTab.title: String
+    get() = when (this) {
+        MainTab.EXPENSES -> "Расходы"
+        MainTab.INCOMES -> "Доходы"
+        MainTab.ACCOUNTS -> "Счета"
+    }
