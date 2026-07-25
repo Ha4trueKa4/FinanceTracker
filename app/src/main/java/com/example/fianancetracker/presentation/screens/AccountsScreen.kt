@@ -15,8 +15,8 @@ import com.example.fianancetracker.presentation.components.common.FinanceLoading
 import com.example.fianancetracker.presentation.components.common.FinanceTotalCard
 import com.example.fianancetracker.presentation.model.ListItemModel
 import com.example.fianancetracker.presentation.utils.toThousand
+import com.example.fianancetracker.presentation.viewmodel.AccountsUiState
 import com.example.fianancetracker.presentation.viewmodel.AccountsViewModel
-import com.example.fianancetracker.presentation.viewmodel.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,27 +27,27 @@ fun AccountsScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     when (val state = uiState) {
-        is UiState.Loading -> {
+        is AccountsUiState.Loading -> {
             FinanceLoadingState(modifier = modifier)
         }
-        is UiState.Error -> {
+        is AccountsUiState.Error -> {
             FinanceErrorState(
                 message = state.message,
                 onRetry = { viewModel.loadAccounts() },
                 modifier = modifier
             )
         }
-        is UiState.Empty -> {
+        is AccountsUiState.Empty -> {
             FinanceEmptyState(message = "Нет счетов", modifier = modifier)
         }
-        is UiState.Content -> {
+        is AccountsUiState.Content -> {
             val accountEmojis = mapOf(
                 AccountType.DEBIT to "🏦",
                 AccountType.SAVINGS to "🐖",
                 AccountType.CREDIT to "💳",
                 AccountType.CASH to "💵",
             )
-            val items = state.data.map { account ->
+            val items = state.accounts.map { account ->
                 ListItemModel(
                     id = account.id,
                     lead = ListItemModel.Lead(
@@ -63,7 +63,7 @@ fun AccountsScreen(
                     )
                 )
             }
-            val totalText = toThousand(state.data.sumOf { it.balance })
+            val totalText = toThousand(state.accounts.sumOf { it.balance })
             Column(modifier = modifier.fillMaxSize()) {
                 FinanceTotalCard(
                     label = "баланс всего",

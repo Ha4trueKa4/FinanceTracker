@@ -1,5 +1,8 @@
 package com.example.fianancetracker.data.repository
 
+import com.example.fianancetracker.data.common.apiCall
+import com.example.fianancetracker.data.common.bodyOrNull
+import com.example.fianancetracker.data.common.bodyOrThrow
 import com.example.fianancetracker.data.mapper.toDomain
 import com.example.fianancetracker.data.mapper.toExpense
 import com.example.fianancetracker.data.mapper.toIncome
@@ -13,22 +16,15 @@ class AnalyticsRepositoryImpl(
     private val api: FinanceApi
 ) : AnalyticsRepository {
 
-    override suspend fun getAnalyticsData(): AnalyticsData {
-        val accountsResponse = api.getAccounts()
-        if (!accountsResponse.isSuccessful) {
-            throw Exception("Ошибка загрузки счетов: ${accountsResponse.code()}")
-        }
-        val accountDtos = accountsResponse.body() ?: emptyList()
+    override suspend fun getAnalyticsData(): Result<AnalyticsData> = apiCall {
+        val accountDtos = api.getAccounts().bodyOrThrow()
         val accounts = accountDtos.map { it.toDomain() }
 
         val allExpenses = mutableListOf<Expense>()
         val allIncomes = mutableListOf<Income>()
 
         for (accountDto in accountDtos) {
-            val txResponse = api.getTransactionsByAccountAndPeriod(accountDto.id)
-            if (!txResponse.isSuccessful) continue
-
-            txResponse.body()?.forEach { tx ->
+            api.getTransactionsByAccountAndPeriod(accountDto.id).bodyOrNull()?.forEach { tx ->
                 if (tx.category.isIncome) {
                     allIncomes.add(tx.toIncome())
                 } else {
@@ -40,7 +36,7 @@ class AnalyticsRepositoryImpl(
         val categories = (allExpenses.map { it.category } + allIncomes.map { it.category })
             .distinctBy { it.id }
 
-        return AnalyticsData(
+        AnalyticsData(
             accounts = accounts,
             expenses = allExpenses,
             incomes = allIncomes,

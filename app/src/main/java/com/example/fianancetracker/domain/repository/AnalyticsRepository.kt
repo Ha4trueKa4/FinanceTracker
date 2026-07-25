@@ -9,5 +9,5 @@ import com.example.fianancetracker.domain.income.Income
 
 
 interface AnalyticsRepository {
-    suspend fun getAnalyticsData(): AnalyticsData
+    suspend fun getAnalyticsData(): Result<AnalyticsData>
 }

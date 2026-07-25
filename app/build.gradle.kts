@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val secretsFile = rootProject.file("secrets.properties")
+val secretsFile = rootProject.file("local.properties")
 val secrets = Properties().apply {
     if (secretsFile.exists()) load(secretsFile.inputStream())
 }

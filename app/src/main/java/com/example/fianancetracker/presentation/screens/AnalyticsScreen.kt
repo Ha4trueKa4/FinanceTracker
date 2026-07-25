@@ -47,8 +47,8 @@ import com.example.fianancetracker.presentation.components.common.FinanceLoading
 import com.example.fianancetracker.presentation.components.common.FinancePieChart
 import com.example.fianancetracker.presentation.components.filters.FilterRow
 import com.example.fianancetracker.presentation.utils.toThousand
+import com.example.fianancetracker.presentation.viewmodel.AnalyticsUiState
 import com.example.fianancetracker.presentation.viewmodel.AnalyticsViewModel
-import com.example.fianancetracker.presentation.viewmodel.UiState
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,11 +94,11 @@ fun AnalyticsScreen(
         modifier = modifier
     ) { padding ->
         when (val s = state) {
-            is UiState.Loading -> {
+            is AnalyticsUiState.Loading -> {
                 FinanceLoadingState(modifier = Modifier.padding(padding))
             }
 
-            is UiState.Error -> {
+            is AnalyticsUiState.Error -> {
                 FinanceErrorState(
                     message = s.message,
                     onRetry = { viewModel.loadData() },
@@ -106,14 +106,14 @@ fun AnalyticsScreen(
                 )
             }
 
-            is UiState.Empty -> {
+            is AnalyticsUiState.Empty -> {
                 FinanceEmptyState(
                     message = "Нет операций за выбранный период",
                     modifier = Modifier.padding(padding)
                 )
             }
 
-            is UiState.Content -> {
+            is AnalyticsUiState.Content -> {
                 val data = s.data
 
                 if (data.items.isEmpty()) {

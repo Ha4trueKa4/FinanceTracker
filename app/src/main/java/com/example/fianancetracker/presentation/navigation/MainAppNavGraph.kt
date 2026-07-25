@@ -7,14 +7,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.fianancetracker.presentation.screens.AccountsScreen
 import com.example.fianancetracker.presentation.screens.AnalyticsScreen
-import com.example.fianancetracker.presentation.screens.ExpensesScreen
-import com.example.fianancetracker.presentation.screens.IncomeScreen
 import com.example.fianancetracker.presentation.screens.SplashScreen
+import com.example.fianancetracker.presentation.screens.TransactionsScreen
 import com.example.fianancetracker.presentation.viewmodel.AccountsViewModel
 import com.example.fianancetracker.presentation.viewmodel.AnalyticsViewModel
-import com.example.fianancetracker.presentation.viewmodel.ExpensesViewModel
-import com.example.fianancetracker.presentation.viewmodel.IncomeViewModel
+import com.example.fianancetracker.presentation.viewmodel.TransactionsViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun MainAppNavGraph(
@@ -36,15 +35,17 @@ fun MainAppNavGraph(
             )
         }
         composable(Screen.Expenses.route) {
-            val viewModel: ExpensesViewModel = koinViewModel()
-            ExpensesScreen(
-                viewModel = viewModel
+            val viewModel: TransactionsViewModel = koinViewModel { parametersOf(false) }
+            TransactionsScreen(
+                viewModel = viewModel,
+                isIncome = false
             )
         }
         composable(Screen.Incomes.route) {
-            val viewModel: IncomeViewModel = koinViewModel()
-            IncomeScreen(
-                viewModel = viewModel
+            val viewModel: TransactionsViewModel = koinViewModel { parametersOf(true) }
+            TransactionsScreen(
+                viewModel = viewModel,
+                isIncome = true
             )
         }
         composable(Screen.Accounts.route) {

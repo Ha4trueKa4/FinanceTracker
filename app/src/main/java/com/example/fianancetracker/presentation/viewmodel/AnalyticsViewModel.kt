@@ -14,11 +14,11 @@ import com.example.fianancetracker.domain.transaction.Transaction
 import com.example.fianancetracker.presentation.components.common.PieChartSlice
 import com.example.fianancetracker.presentation.model.ListItemModel
 import com.example.fianancetracker.presentation.utils.toThousand
+import com.example.fianancetracker.presentation.utils.toUserMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -29,8 +29,8 @@ class AnalyticsViewModel(
     private val _filter = MutableStateFlow(AnalyticsFilter())
     val filter: StateFlow<AnalyticsFilter> = _filter.asStateFlow()
 
-    private val _state = MutableStateFlow<UiState<AnalyticsState>>(UiState.Loading)
-    val state: StateFlow<UiState<AnalyticsState>> = _state.asStateFlow()
+    private val _state = MutableStateFlow<AnalyticsUiState>(AnalyticsUiState.Loading)
+    val state: StateFlow<AnalyticsUiState> = _state.asStateFlow()
 
     private var allExpenses: List<Expense> = emptyList()
     private var allIncomes: List<Income> = emptyList()
@@ -50,19 +50,16 @@ class AnalyticsViewModel(
 
     fun loadData() {
         viewModelScope.launch {
-            _state.value = UiState.Loading
-            try {
-                val data = analyticsRepository.getAnalyticsData()
-                allExpenses = data.expenses
-                allIncomes = data.incomes
-                allAccounts = data.accounts
-                allCategories = data.categories
-                applyFilters()
-            } catch (e: Exception) {
-                _state.value = UiState.Error(
-                    if (e is IOException) "Нет подключения к интернету" else "Неизвестная ошибка"
-                )
-            }
+            _state.value = AnalyticsUiState.Loading
+            analyticsRepository.getAnalyticsData()
+                .onSuccess { data ->
+                    allExpenses = data.expenses
+                    allIncomes = data.incomes
+                    allAccounts = data.accounts
+                    allCategories = data.categories
+                    applyFilters()
+                }
+                .onFailure { _state.value = AnalyticsUiState.Error(it.toUserMessage()) }
         }
     }
 
@@ -112,7 +109,7 @@ class AnalyticsViewModel(
             )
         }
 
-        _state.value = UiState.Content(
+        _state.value = AnalyticsUiState.Content(
             AnalyticsState(
                 accounts = allAccounts,
                 categories = allCategories,

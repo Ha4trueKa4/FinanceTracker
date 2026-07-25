@@ -14,53 +14,61 @@ import com.example.fianancetracker.presentation.components.common.FinanceLoading
 import com.example.fianancetracker.presentation.components.common.FinanceTotalCard
 import com.example.fianancetracker.presentation.model.ListItemModel
 import com.example.fianancetracker.presentation.utils.toThousand
-import com.example.fianancetracker.presentation.viewmodel.IncomeViewModel
-import com.example.fianancetracker.presentation.viewmodel.UiState
+import com.example.fianancetracker.presentation.viewmodel.TransactionsUiState
+import com.example.fianancetracker.presentation.viewmodel.TransactionsViewModel
 
+/**
+ * Единый экран для расходов и доходов. Отличия сводятся к [isIncome]:
+ * знак суммы, подписи и текст пустого состояния.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IncomeScreen(
-    viewModel: IncomeViewModel,
+fun TransactionsScreen(
+    viewModel: TransactionsViewModel,
+    isIncome: Boolean,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     when (val state = uiState) {
-        is UiState.Loading -> {
+        is TransactionsUiState.Loading -> {
             FinanceLoadingState(modifier = modifier)
         }
-        is UiState.Error -> {
+        is TransactionsUiState.Error -> {
             FinanceErrorState(
                 message = state.message,
-                onRetry = { viewModel.loadIncomes() },
+                onRetry = { viewModel.load() },
                 modifier = modifier
             )
         }
-        is UiState.Empty -> {
-            FinanceEmptyState(message = "Нет доходов", modifier = modifier)
+        is TransactionsUiState.Empty -> {
+            FinanceEmptyState(
+                message = if (isIncome) "Нет доходов" else "Нет расходов",
+                modifier = modifier
+            )
         }
-        is UiState.Content -> {
-            val items = state.data.map { income ->
+        is TransactionsUiState.Content -> {
+            val items = state.items.map { transaction ->
                 ListItemModel(
-                    id = income.id,
+                    id = transaction.id,
                     lead = ListItemModel.Lead(
-                        emoji = income.category.emoji
+                        emoji = transaction.category.emoji
                     ),
                     content = ListItemModel.Content(
-                        title = income.title,
-                        subtitle = "${income.category.name} • ${income.date}"
+                        title = transaction.title,
+                        subtitle = "${transaction.category.name} • ${transaction.date}"
                     ),
                     trail = ListItemModel.Trail(
-                        amount = toThousand(income.amount),
-                        isPositive = true
+                        amount = toThousand(transaction.amount),
+                        isPositive = isIncome
                     )
                 )
             }
-            val totalText = toThousand(state.data.sumOf { it.amount })
+            val totalText = toThousand(state.items.sumOf { it.amount })
             Column(modifier = modifier.fillMaxSize()) {
                 FinanceTotalCard(
-                    label = "доходы всего",
-                    amount = totalText
+                    label = if (isIncome) "доходы всего" else "расходы всего",
+                    amount = totalText,
                 )
                 FinanceListContent(
                     items = items,
