@@ -4,18 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fianancetracker.core.domain.account.Account
 import com.example.fianancetracker.core.domain.repository.AccountRepository
+import com.example.fianancetracker.core.domain.repository.CategoryRepository
 import com.example.fianancetracker.core.domain.repository.TransactionRepository
 import com.example.fianancetracker.core.domain.transaction.Transaction
 import com.example.fianancetracker.core.ui.model.ListItemModel
 import com.example.fianancetracker.core.ui.utils.accountEmoji
 import com.example.fianancetracker.core.ui.utils.toThousand
 import com.example.fianancetracker.core.ui.utils.toUserMessage
+import com.example.fianancetracker.feature.main.add.AddPicker
+import com.example.fianancetracker.feature.main.add.AddTransactionUiState
+import com.example.fianancetracker.feature.main.add.appendKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -27,12 +32,16 @@ import java.util.Locale
 class MainViewModel(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository,
 ) : ViewModel() {
 
     private val dateFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.forLanguageTag("ru"))
 
     private val _uiState = MutableStateFlow(MainUiState(dateLabel = LocalDate.now().format(dateFormatter)))
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private val _addState = MutableStateFlow(AddTransactionUiState())
+    val addState: StateFlow<AddTransactionUiState> = _addState.asStateFlow()
 
     init {
         selectTab(MainTab.EXPENSES)
@@ -112,11 +121,63 @@ class MainViewModel(
         trail = ListItemModel.Trail(amount = toThousand(balance), isPositive = balance >= 0),
     )
 
+    // --- Добавление операции ---
+
+    /** Открыть форму добавления и подтянуть справочники статей/счетов (лениво). */
+    fun openAddSheet() {
+        _addState.update { it.copy(visible = true) }
+        loadAddDictionaries()
+    }
+
+    fun closeAddSheet() {
+        // сохраняем подгруженные справочники, сбрасываем ввод и выбор
+        _addState.update {
+            AddTransactionUiState(categories = it.categories, accounts = it.accounts)
+        }
+    }
+
+    private fun loadAddDictionaries() {
+        if (_addState.value.categories.isNotEmpty() && _addState.value.accounts.isNotEmpty()) return
+        _addState.update { it.copy(loading = true) }
+        viewModelScope.launch {
+            val categories = categoryRepository.getCategories().getOrDefault(emptyList())
+            val accounts = accountRepository.getAccounts().getOrDefault(emptyList())
+            _addState.update { it.copy(loading = false, categories = categories, accounts = accounts) }
+        }
+    }
+
+    fun onAddKey(key: String) =
+        _addState.update { it.copy(amountDigits = appendKey(it.amountDigits, key)) }
+
+    fun onAddBackspace() =
+        _addState.update { it.copy(amountDigits = it.amountDigits.dropLast(1)) }
+
+    fun openAddPicker(picker: AddPicker) = _addState.update { it.copy(openPicker = picker) }
+
+    fun dismissAddPicker() = _addState.update { it.copy(openPicker = AddPicker.NONE) }
+
+    fun selectCategory(id: Long) =
+        _addState.update { it.copy(selectedCategoryId = id, openPicker = AddPicker.NONE) }
+
+    fun selectAccount(id: String) =
+        _addState.update { it.copy(selectedAccountId = id, openPicker = AddPicker.NONE) }
+
+    fun selectDate(date: LocalDate) =
+        _addState.update { it.copy(date = date, openPicker = AddPicker.NONE) }
+
+    fun selectTime(time: LocalTime) =
+        _addState.update { it.copy(time = time, openPicker = AddPicker.NONE) }
+
     /**
-     * Добавление операции: оптимистично дописываем в список текущего таба.
-     * TODO: POST в сеть (нужен create-эндпоинт в FinanceApi) + инвалидация кеша таба «Счета».
+     * Подтверждение добавления. Сначала валидирует форму: при незаполненных обязательных
+     * полях (сумма/статья/счёт) взводит [AddTransactionUiState.showErrors] и не закрывает форму.
+     * TODO: POST в сеть (нужен create-эндпоинт в FinanceApi) + инвалидация кеша табов.
      */
-    fun addTransaction() {
-        // заготовка под будущий флоу добавления
+    fun confirmAdd() {
+        if (!_addState.value.isValid) {
+            _addState.update { it.copy(showErrors = true) }
+            return
+        }
+        closeAddSheet()
     }
 }

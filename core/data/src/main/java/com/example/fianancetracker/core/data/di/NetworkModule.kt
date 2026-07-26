@@ -5,9 +5,11 @@ import com.example.fianancetracker.core.data.network.api.AuthInterceptor
 import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.repository.AccountRepositoryImpl
 import com.example.fianancetracker.core.data.repository.AnalyticsRepositoryImpl
+import com.example.fianancetracker.core.data.repository.CategoryRepositoryImpl
 import com.example.fianancetracker.core.data.repository.TransactionRepositoryImpl
 import com.example.fianancetracker.core.domain.repository.AccountRepository
 import com.example.fianancetracker.core.domain.repository.AnalyticsRepository
+import com.example.fianancetracker.core.domain.repository.CategoryRepository
 import com.example.fianancetracker.core.domain.repository.TransactionRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -48,4 +50,5 @@ val repositoryModule = module {
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
     single<AccountRepository> { AccountRepositoryImpl(get()) }
     single<AnalyticsRepository> { AnalyticsRepositoryImpl(get()) }
+    single<CategoryRepository> { CategoryRepositoryImpl(get()) }
 }

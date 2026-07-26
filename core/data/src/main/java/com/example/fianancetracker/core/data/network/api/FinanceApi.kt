@@ -9,6 +9,9 @@ interface FinanceApi {
     @GET("accounts")
     suspend fun getAccounts(): Response<List<AccountDto>>
 
+    @GET("categories")
+    suspend fun getCategories(): Response<List<CategoryDto>>
+
     @GET("transactions/account/{accountId}/period")
     suspend fun getTransactionsByAccountAndPeriod(
         @Path("accountId") accountId: Long,

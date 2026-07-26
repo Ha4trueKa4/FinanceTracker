@@ -24,6 +24,8 @@ import com.example.fianancetracker.core.ui.components.FinanceListContent
 import com.example.fianancetracker.core.ui.components.FinanceLoadingState
 import com.example.fianancetracker.core.ui.components.FinanceTopBar
 import com.example.fianancetracker.core.ui.components.FinanceTotalCard
+import com.example.fianancetracker.feature.main.add.AddPicker
+import com.example.fianancetracker.feature.main.add.AddTransactionSheetHost
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +36,7 @@ fun MainScreen(
     viewModel: MainViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val addState by viewModel.addState.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -57,7 +60,7 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            FinanceFloatingActionButton({ viewModel.addTransaction() })
+            FinanceFloatingActionButton({ viewModel.openAddSheet() })
         }
     ) { padding ->
         val contentModifier = Modifier.padding(padding)
@@ -77,6 +80,25 @@ fun MainScreen(
                 )
             }
         }
+    }
+
+    if (addState.visible) {
+        AddTransactionSheetHost(
+            state = addState,
+            onDismiss = viewModel::closeAddSheet,
+            onKeyClick = viewModel::onAddKey,
+            onBackspace = viewModel::onAddBackspace,
+            onConfirm = viewModel::confirmAdd,
+            onCategoryClick = { viewModel.openAddPicker(AddPicker.CATEGORY) },
+            onDateClick = { viewModel.openAddPicker(AddPicker.DATE) },
+            onTimeClick = { viewModel.openAddPicker(AddPicker.TIME) },
+            onAccountClick = { viewModel.openAddPicker(AddPicker.ACCOUNT) },
+            onPickCategory = viewModel::selectCategory,
+            onPickAccount = viewModel::selectAccount,
+            onPickDate = viewModel::selectDate,
+            onPickTime = viewModel::selectTime,
+            onPickerDismiss = viewModel::dismissAddPicker,
+        )
     }
 }
 

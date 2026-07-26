@@ -26,8 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +44,7 @@ import com.example.fianancetracker.core.ui.components.FinanceErrorState
 import com.example.fianancetracker.core.ui.components.FinanceListItem
 import com.example.fianancetracker.core.ui.components.FinanceLoadingState
 import com.example.fianancetracker.feature.analytics.components.FinancePieChart
-import com.example.fianancetracker.feature.analytics.components.filters.FilterRow
+import com.example.fianancetracker.core.ui.components.FilterRow
 import com.example.fianancetracker.feature.analytics.AnalyticsUiState
 import com.example.fianancetracker.feature.analytics.AnalyticsViewModel
 
@@ -139,7 +138,7 @@ fun AnalyticsScreen(
 
                         item {
                             FilterRow(
-                                icon = ImageVector.vectorResource(id = R.drawable.ic_filter_type),
+                                icon = painterResource(id = R.drawable.ic_filter_type),
                                 label = "Тип",
                                 badgeText = data.typeBadge,
                                 onClick = { showTypeSheet = true }
@@ -149,7 +148,7 @@ fun AnalyticsScreen(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                             )
                             FilterRow(
-                                icon = ImageVector.vectorResource(id = R.drawable.ic_filter_period),
+                                icon = painterResource(id = R.drawable.ic_filter_period),
                                 label = "Период",
                                 badgeText = data.periodBadge,
                                 onClick = { showPeriodSheet = true }
@@ -159,7 +158,7 @@ fun AnalyticsScreen(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                             )
                             FilterRow(
-                                icon = ImageVector.vectorResource(id = R.drawable.ic_filter_category),
+                                icon = painterResource(id = R.drawable.ic_filter_category),
                                 label = "Статьи",
                                 badgeText = data.categoriesBadge,
                                 onClick = { showCategorySheet = true }
@@ -169,7 +168,7 @@ fun AnalyticsScreen(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                             )
                             FilterRow(
-                                icon = ImageVector.vectorResource(id = R.drawable.ic_filter_account),
+                                icon = painterResource(id = R.drawable.ic_filter_account),
                                 label = "Счёт",
                                 badgeText = data.accountBadge,
                                 onClick = { showAccountSheet = true }
