@@ -1,4 +1,4 @@
-# CLAUDE.md
+c# CLAUDE.md
 
 Финансовый трекер (FiananceTracker) — Android-приложение на Jetpack Compose для учёта доходов/расходов, работы со счетами и аналитики трат за период. Учебный проект (SHMR Android 2026). Данные берутся из реального REST API `https://shmr-finance.ru/api/v1/`.
 

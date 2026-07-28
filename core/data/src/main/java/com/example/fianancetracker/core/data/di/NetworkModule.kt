@@ -11,6 +11,7 @@ import com.example.fianancetracker.core.domain.repository.AccountRepository
 import com.example.fianancetracker.core.domain.repository.AnalyticsRepository
 import com.example.fianancetracker.core.domain.repository.CategoryRepository
 import com.example.fianancetracker.core.domain.repository.TransactionRepository
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
@@ -37,10 +38,11 @@ val networkModule = module {
     }
 
     single {
+        val gson = GsonBuilder().serializeNulls().create()
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(get())
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(FinanceApi::class.java)
     }

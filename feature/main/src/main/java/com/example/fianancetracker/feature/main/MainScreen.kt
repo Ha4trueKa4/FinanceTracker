@@ -3,8 +3,6 @@ package com.example.fianancetracker.feature.main
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -15,8 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import com.example.fianancetracker.core.ui.components.FinanceEmptyState
 import com.example.fianancetracker.core.ui.components.FinanceErrorState
 import com.example.fianancetracker.core.ui.components.FinanceFloatingActionButton
@@ -24,8 +20,9 @@ import com.example.fianancetracker.core.ui.components.FinanceListContent
 import com.example.fianancetracker.core.ui.components.FinanceLoadingState
 import com.example.fianancetracker.core.ui.components.FinanceTopBar
 import com.example.fianancetracker.core.ui.components.FinanceTotalCard
-import com.example.fianancetracker.feature.main.add.AddPicker
-import com.example.fianancetracker.feature.main.add.AddTransactionSheetHost
+import com.example.fianancetracker.feature.main.add.account.AddAccountSheetHost
+import com.example.fianancetracker.feature.main.add.transaction.AddPicker
+import com.example.fianancetracker.feature.main.add.transaction.AddTransactionSheetHost
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +34,7 @@ fun MainScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val addState by viewModel.addState.collectAsState()
+    val addAccountState by viewModel.addAccountState.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -60,7 +58,10 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            FinanceFloatingActionButton({ viewModel.openAddSheet() })
+            FinanceFloatingActionButton({
+                if (state.selectedTab == MainTab.ACCOUNTS) viewModel.openAddAccountSheet()
+                else viewModel.openAddSheet()
+            })
         }
     ) { padding ->
         val contentModifier = Modifier.padding(padding)
@@ -74,9 +75,14 @@ fun MainScreen(
             is TabContent.Empty -> FinanceEmptyState(message = content.message, modifier = contentModifier)
             is TabContent.Content -> Column(modifier = contentModifier.fillMaxSize()) {
                 FinanceTotalCard(label = content.totalLabel, amount = content.totalAmount)
+                val isTransactionTab = state.selectedTab != MainTab.ACCOUNTS
                 FinanceListContent(
                     items = content.items,
-                    modifier = Modifier.fillMaxSize().weight(1f)
+                    modifier = Modifier.fillMaxSize().weight(1f),
+                    onItemClick = { id ->
+                        if (isTransactionTab) viewModel.openEditSheet(id)
+                        else viewModel.openEditAccountSheet(id)
+                    }
                 )
             }
         }
@@ -89,6 +95,7 @@ fun MainScreen(
             onKeyClick = viewModel::onAddKey,
             onBackspace = viewModel::onAddBackspace,
             onConfirm = viewModel::confirmAdd,
+            onCommentChange = viewModel::onAddComment,
             onCategoryClick = { viewModel.openAddPicker(AddPicker.CATEGORY) },
             onDateClick = { viewModel.openAddPicker(AddPicker.DATE) },
             onTimeClick = { viewModel.openAddPicker(AddPicker.TIME) },
@@ -100,18 +107,19 @@ fun MainScreen(
             onPickerDismiss = viewModel::dismissAddPicker,
         )
     }
-}
 
-@Composable
-private fun MainTab.icon(): ImageVector = when (this) {
-    MainTab.EXPENSES -> ImageVector.vectorResource(R.drawable.expenses)
-    MainTab.INCOMES -> Icons.AutoMirrored.Filled.TrendingUp
-    MainTab.ACCOUNTS -> ImageVector.vectorResource(R.drawable.accounts)
-}
-
-private val MainTab.title: String
-    get() = when (this) {
-        MainTab.EXPENSES -> "Расходы"
-        MainTab.INCOMES -> "Доходы"
-        MainTab.ACCOUNTS -> "Счета"
+    if (addAccountState.visible) {
+        AddAccountSheetHost(
+            state = addAccountState,
+            onDismiss = viewModel::closeAddAccountSheet,
+            onKeyClick = viewModel::onAccountKey,
+            onBackspace = viewModel::onAccountBackspace,
+            onConfirm = viewModel::confirmAddAccount,
+            onNameChange = viewModel::onAccountName,
+            onEmojiSelect = viewModel::selectAccountEmoji,
+            onCurrencyClick = viewModel::openAccountCurrencyPicker,
+            onPickCurrency = viewModel::selectAccountCurrency,
+            onCurrencyPickerDismiss = viewModel::dismissAccountCurrencyPicker,
+        )
     }
+}

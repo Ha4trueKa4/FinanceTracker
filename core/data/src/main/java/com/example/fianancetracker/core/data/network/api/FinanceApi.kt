@@ -9,6 +9,17 @@ interface FinanceApi {
     @GET("accounts")
     suspend fun getAccounts(): Response<List<AccountDto>>
 
+    @POST("accounts")
+    suspend fun createAccount(
+        @Body body: AccountRequestDto
+    ): Response<AccountDto>
+
+    @PUT("accounts/{id}")
+    suspend fun updateAccount(
+        @Path("id") id: Long,
+        @Body body: AccountRequestDto
+    ): Response<AccountDto>
+
     @GET("categories")
     suspend fun getCategories(): Response<List<CategoryDto>>
 
@@ -18,4 +29,20 @@ interface FinanceApi {
         @Query("startDate") startDate: String? = null,
         @Query("endDate") endDate: String? = null
     ): Response<List<TransactionResponseDto>>
+
+    @GET("transactions/{id}")
+    suspend fun getTransactionById(
+        @Path("id") id: Long
+    ): Response<TransactionResponseDto>
+
+    @POST("transactions")
+    suspend fun createTransaction(
+        @Body body: TransactionRequestDto
+    ): Response<TransactionDto>
+
+    @PUT("transactions/{id}")
+    suspend fun updateTransaction(
+        @Path("id") id: Long,
+        @Body body: TransactionRequestDto
+    ): Response<TransactionResponseDto>
 }

@@ -6,8 +6,6 @@ import com.example.fianancetracker.core.domain.category.Category
 import com.example.fianancetracker.core.domain.expense.Expense
 import com.example.fianancetracker.core.domain.income.Income
 
-
-
 interface AnalyticsRepository {
     suspend fun getAnalyticsData(): Result<AnalyticsData>
 }

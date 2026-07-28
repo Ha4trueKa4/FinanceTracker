@@ -31,10 +31,6 @@ private val BorderColor = Color(0xFFC4C7C5)
 private val LabelColor = Color(0xFF1D1B20)
 private val ErrorColor = Color(0xFFB3261E)
 
-/**
- * Визуальные параметры [FilterRow] — то, чем расходятся дизайны аналитики и bottom sheet
- * добавления. Дефолт — стиль аналитики; для sheet есть пресет [FilterRowDefaults.Sheet].
- */
 data class FilterRowStyle(
     val height: Dp = 56.dp,
     val iconSize: Dp = 32.dp,
@@ -46,10 +42,8 @@ data class FilterRowStyle(
 )
 
 object FilterRowDefaults {
-    /** Стиль строк фильтров на экране аналитики. */
     val Default = FilterRowStyle()
 
-    /** Стиль строк формы в bottom sheet добавления/редактирования транзакции. */
     val Sheet = FilterRowStyle(
         height = 64.dp,
         iconSize = 40.dp,
@@ -61,11 +55,6 @@ object FilterRowDefaults {
     )
 }
 
-/**
- * Строка «иконка в кружке + подпись + пилюля-значение», кликабельная целиком.
- * Общая для фильтров аналитики и формы добавления — оформление задаётся [style].
- * Бейдж рисуется, только когда [badgeText] непустой.
- */
 @Composable
 fun FilterRow(
     icon: Painter,

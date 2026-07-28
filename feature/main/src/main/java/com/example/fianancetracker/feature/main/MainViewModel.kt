@@ -7,28 +7,28 @@ import com.example.fianancetracker.core.domain.repository.AccountRepository
 import com.example.fianancetracker.core.domain.repository.CategoryRepository
 import com.example.fianancetracker.core.domain.repository.TransactionRepository
 import com.example.fianancetracker.core.domain.transaction.Transaction
+import com.example.fianancetracker.core.domain.transaction.TransactionDraft
 import com.example.fianancetracker.core.ui.model.ListItemModel
 import com.example.fianancetracker.core.ui.utils.accountEmoji
 import com.example.fianancetracker.core.ui.utils.toThousand
 import com.example.fianancetracker.core.ui.utils.toUserMessage
-import com.example.fianancetracker.feature.main.add.AddPicker
-import com.example.fianancetracker.feature.main.add.AddTransactionUiState
-import com.example.fianancetracker.feature.main.add.appendKey
+import com.example.fianancetracker.feature.main.add.account.ACCOUNT_EMOJIS
+import com.example.fianancetracker.feature.main.add.account.AddAccountUiState
+import com.example.fianancetracker.feature.main.add.transaction.AddPicker
+import com.example.fianancetracker.feature.main.add.transaction.AddTransactionUiState
+import com.example.fianancetracker.feature.main.add.common.appendKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-/**
- * Одна VM на весь главный экран. Табы переключают состояние списка (без навигации),
- * данные каждого таба грузятся лениво — только при первом открытии — и кешируются.
- * Вся трансформация (маппинг в UI-модель, суммы, форматирование) — здесь; экран лишь рендерит.
- */
 class MainViewModel(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
@@ -43,6 +43,11 @@ class MainViewModel(
     private val _addState = MutableStateFlow(AddTransactionUiState())
     val addState: StateFlow<AddTransactionUiState> = _addState.asStateFlow()
 
+    private val _addAccountState = MutableStateFlow(AddAccountUiState())
+    val addAccountState: StateFlow<AddAccountUiState> = _addAccountState.asStateFlow()
+
+    private var loadedAccounts: List<Account> = emptyList()
+
     init {
         selectTab(MainTab.EXPENSES)
     }
@@ -54,7 +59,6 @@ class MainViewModel(
         }
     }
 
-    /** Принудительная перезагрузка текущего таба (кнопка «повторить»). */
     fun reloadCurrent() = loadTab(_uiState.value.selectedTab)
 
     private fun setTab(tab: MainTab, content: TabContent) {
@@ -91,6 +95,7 @@ class MainViewModel(
     private suspend fun loadAccounts() {
         accountRepository.getAccounts()
             .onSuccess { accounts ->
+                loadedAccounts = accounts
                 setTab(MainTab.ACCOUNTS, if (accounts.isEmpty()) {
                     TabContent.Empty("Нет счетов")
                 } else {
@@ -113,7 +118,7 @@ class MainViewModel(
 
     private fun Account.toListItem() = ListItemModel(
         id = id,
-        lead = ListItemModel.Lead(emoji = accountEmoji(type)),
+        lead = ListItemModel.Lead(emoji = emoji.ifEmpty { accountEmoji(type) }),
         content = ListItemModel.Content(
             title = name,
             subtitle = cardNumber.ifEmpty { type.displayName },
@@ -121,29 +126,60 @@ class MainViewModel(
         trail = ListItemModel.Trail(amount = toThousand(balance), isPositive = balance >= 0),
     )
 
-    // --- Добавление операции ---
-
-    /** Открыть форму добавления и подтянуть справочники статей/счетов (лениво). */
     fun openAddSheet() {
-        _addState.update { it.copy(visible = true) }
-        loadAddDictionaries()
+        val isIncome = _uiState.value.selectedTab == MainTab.INCOMES
+        _addState.update { it.copy(visible = true, editingId = null, isIncome = isIncome) }
+        viewModelScope.launch { loadDictionariesIfNeeded() }
+    }
+
+    fun openEditSheet(id: String) {
+        _addState.update {
+            AddTransactionUiState(
+                visible = true,
+                loading = true,
+                editingId = id,
+                categories = it.categories,
+                accounts = it.accounts,
+            )
+        }
+        viewModelScope.launch {
+            loadDictionariesIfNeeded()
+            transactionRepository.getTransactionDetails(id)
+                .onSuccess { details ->
+                    _addState.update {
+                        val income = it.categories
+                            .firstOrNull { category -> category.id == details.categoryId }
+                            ?.isIncome ?: it.isIncome
+                        it.copy(
+                            loading = false,
+                            isIncome = income,
+                            selectedCategoryId = details.categoryId,
+                            selectedAccountId = details.accountId.toString(),
+                            amountDigits = details.amount.toLong().toString(),
+                            comment = details.comment.orEmpty(),
+                            date = details.date,
+                            time = details.time,
+                        )
+                    }
+                }
+                .onFailure {
+                    closeAddSheet()
+                }
+        }
     }
 
     fun closeAddSheet() {
-        // сохраняем подгруженные справочники, сбрасываем ввод и выбор
         _addState.update {
             AddTransactionUiState(categories = it.categories, accounts = it.accounts)
         }
     }
 
-    private fun loadAddDictionaries() {
+    private suspend fun loadDictionariesIfNeeded() {
         if (_addState.value.categories.isNotEmpty() && _addState.value.accounts.isNotEmpty()) return
         _addState.update { it.copy(loading = true) }
-        viewModelScope.launch {
-            val categories = categoryRepository.getCategories().getOrDefault(emptyList())
-            val accounts = accountRepository.getAccounts().getOrDefault(emptyList())
-            _addState.update { it.copy(loading = false, categories = categories, accounts = accounts) }
-        }
+        val categories = categoryRepository.getCategories().getOrDefault(emptyList())
+        val accounts = accountRepository.getAccounts().getOrDefault(emptyList())
+        _addState.update { it.copy(loading = false, categories = categories, accounts = accounts) }
     }
 
     fun onAddKey(key: String) =
@@ -151,6 +187,8 @@ class MainViewModel(
 
     fun onAddBackspace() =
         _addState.update { it.copy(amountDigits = it.amountDigits.dropLast(1)) }
+
+    fun onAddComment(text: String) = _addState.update { it.copy(comment = text) }
 
     fun openAddPicker(picker: AddPicker) = _addState.update { it.copy(openPicker = picker) }
 
@@ -168,16 +206,116 @@ class MainViewModel(
     fun selectTime(time: LocalTime) =
         _addState.update { it.copy(time = time, openPicker = AddPicker.NONE) }
 
-    /**
-     * Подтверждение добавления. Сначала валидирует форму: при незаполненных обязательных
-     * полях (сумма/статья/счёт) взводит [AddTransactionUiState.showErrors] и не закрывает форму.
-     * TODO: POST в сеть (нужен create-эндпоинт в FinanceApi) + инвалидация кеша табов.
-     */
     fun confirmAdd() {
-        if (!_addState.value.isValid) {
+        val state = _addState.value
+        if (state.submitting) return
+        if (!state.isValid) {
             _addState.update { it.copy(showErrors = true) }
             return
         }
-        closeAddSheet()
+
+        val draft = TransactionDraft(
+            accountId = state.selectedAccountId!!.toLong(),
+            categoryId = state.selectedCategoryId!!,
+            amount = (state.amountDigits.toLongOrNull() ?: 0L).toDouble(),
+            transactionDate = toIsoInstant(state.date, state.time),
+            comment = state.comment.trim(),
+        )
+
+        _addState.update { it.copy(submitting = true) }
+        viewModelScope.launch {
+            val result = state.editingId?.let { id ->
+                transactionRepository.updateTransaction(id, draft)
+            } ?: transactionRepository.createTransaction(draft)
+
+            result
+                .onSuccess {
+                    closeAddSheet()
+                    refreshAllTabs()
+                }
+                .onFailure {
+                    _addState.update { it.copy(submitting = false) }
+                }
+        }
+    }
+
+    private fun refreshAllTabs() {
+        _uiState.update { it.copy(tabs = MainTab.entries.associateWith { TabContent.NotLoaded }) }
+        loadTab(_uiState.value.selectedTab)
+    }
+
+    fun openAddAccountSheet() = _addAccountState.update { AddAccountUiState(visible = true) }
+
+    fun openEditAccountSheet(id: String) {
+        val account = loadedAccounts.firstOrNull { it.id == id } ?: return
+        _addAccountState.update {
+            AddAccountUiState(
+                visible = true,
+                editingId = id,
+                name = account.name,
+                amountDigits = account.balance.toLong().toString().filter { c -> c.isDigit() },
+                emoji = account.emoji.ifEmpty { ACCOUNT_EMOJIS.first() },
+                currency = account.currency.ifEmpty { "RUB" },
+            )
+        }
+    }
+
+    fun closeAddAccountSheet() = _addAccountState.update { AddAccountUiState() }
+
+    fun onAccountKey(key: String) =
+        _addAccountState.update { it.copy(amountDigits = appendKey(it.amountDigits, key)) }
+
+    fun onAccountBackspace() =
+        _addAccountState.update { it.copy(amountDigits = it.amountDigits.dropLast(1)) }
+
+    fun onAccountName(text: String) = _addAccountState.update { it.copy(name = text) }
+
+    fun selectAccountEmoji(emoji: String) = _addAccountState.update { it.copy(emoji = emoji) }
+
+    fun openAccountCurrencyPicker() = _addAccountState.update { it.copy(showCurrencyPicker = true) }
+
+    fun dismissAccountCurrencyPicker() =
+        _addAccountState.update { it.copy(showCurrencyPicker = false) }
+
+    fun selectAccountCurrency(code: String) =
+        _addAccountState.update { it.copy(currency = code, showCurrencyPicker = false) }
+
+    fun confirmAddAccount() {
+        val state = _addAccountState.value
+        if (state.submitting) return
+        if (!state.isValid) {
+            _addAccountState.update { it.copy(showErrors = true) }
+            return
+        }
+
+        val name = state.name.trim()
+        val emoji = state.emoji
+        val balance = (state.amountDigits.toLongOrNull() ?: 0L).toDouble()
+
+        _addAccountState.update { it.copy(submitting = true) }
+        viewModelScope.launch {
+            val result = state.editingId?.let { id ->
+                accountRepository.updateAccount(id, name, emoji, balance, state.currency)
+            } ?: accountRepository.createAccount(name, emoji, balance, state.currency)
+
+            result
+                .onSuccess {
+                    closeAddAccountSheet()
+                    loadTab(MainTab.ACCOUNTS)
+                }
+                .onFailure {
+                    _addAccountState.update { it.copy(submitting = false) }
+                }
+        }
+    }
+
+    private fun toIsoInstant(date: LocalDate, time: LocalTime): String =
+        isoUtcMillisFormatter.format(
+            LocalDateTime.of(date, time).atZone(ZoneId.systemDefault()).toInstant()
+        )
+
+    private companion object {
+        private val isoUtcMillisFormatter: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
     }
 }

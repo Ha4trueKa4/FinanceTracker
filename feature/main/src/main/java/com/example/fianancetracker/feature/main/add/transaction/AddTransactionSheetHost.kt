@@ -1,4 +1,4 @@
-package com.example.fianancetracker.feature.main.add
+package com.example.fianancetracker.feature.main.add.transaction
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -7,11 +7,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/**
- * Хост экрана добавления: показывает основной bottom sheet формы, а поверх — пикеры
- * выбора статьи/счёта. Состоянием владеет [com.example.fianancetracker.feature.main.MainViewModel];
- * здесь только рендер и проброс колбэков.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionSheetHost(
@@ -20,6 +15,7 @@ fun AddTransactionSheetHost(
     onKeyClick: (String) -> Unit,
     onBackspace: () -> Unit,
     onConfirm: () -> Unit,
+    onCommentChange: (String) -> Unit,
     onCategoryClick: () -> Unit,
     onDateClick: () -> Unit,
     onTimeClick: () -> Unit,
@@ -32,32 +28,29 @@ fun AddTransactionSheetHost(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Пока открыт любой пикер (статья/счёт/дата/время), сам sheet добавления прячем,
-    // чтобы не было двух листов друг за другом. Состояние формы живёт во ViewModel и сохраняется.
-    if (state.openPicker == AddPicker.NONE) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            dragHandle = null,
-            containerColor = Color.White,
-            contentWindowInsets = { WindowInsets(0) },
-        ) {
-            AddTransactionSheetContent(
-                state = state.form,
-                onCategoryClick = onCategoryClick,
-                onDateClick = onDateClick,
-                onTimeClick = onTimeClick,
-                onAccountClick = onAccountClick,
-                onKeyClick = onKeyClick,
-                onBackspace = onBackspace,
-                onConfirm = onConfirm,
-            )
-        }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = null,
+        containerColor = Color.White,
+        contentWindowInsets = { WindowInsets(0) },
+    ) {
+        AddTransactionSheetContent(
+            state = state.form,
+            onCategoryClick = onCategoryClick,
+            onDateClick = onDateClick,
+            onTimeClick = onTimeClick,
+            onAccountClick = onAccountClick,
+            onKeyClick = onKeyClick,
+            onBackspace = onBackspace,
+            onConfirm = onConfirm,
+            onCommentChange = onCommentChange,
+        )
     }
 
     when (state.openPicker) {
         AddPicker.CATEGORY -> CategoryPickerSheet(
-            categories = state.categories,
+            categories = state.visibleCategories,
             selectedId = state.selectedCategoryId,
             onSelect = onPickCategory,
             onDismiss = onPickerDismiss,
