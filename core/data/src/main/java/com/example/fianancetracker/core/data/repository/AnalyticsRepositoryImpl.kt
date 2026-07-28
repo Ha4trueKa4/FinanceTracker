@@ -1,46 +1,40 @@
 package com.example.fianancetracker.core.data.repository
 
-import com.example.fianancetracker.core.data.common.apiCall
-import com.example.fianancetracker.core.data.common.bodyOrNull
-import com.example.fianancetracker.core.data.common.bodyOrThrow
-import com.example.fianancetracker.core.data.mapper.toDomain
-import com.example.fianancetracker.core.data.mapper.toExpense
-import com.example.fianancetracker.core.data.mapper.toIncome
-import com.example.fianancetracker.core.data.network.api.FinanceApi
+import com.example.fianancetracker.core.data.db.dao.AccountDao
+import com.example.fianancetracker.core.data.db.dao.CategoryDao
+import com.example.fianancetracker.core.data.db.dao.TransactionDao
+import com.example.fianancetracker.core.data.db.mapper.toDomain
+import com.example.fianancetracker.core.data.db.mapper.toTransaction
+import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.analytics.AnalyticsData
 import com.example.fianancetracker.core.domain.expense.Expense
 import com.example.fianancetracker.core.domain.income.Income
 import com.example.fianancetracker.core.domain.repository.AnalyticsRepository
 
 class AnalyticsRepositoryImpl(
-    private val api: FinanceApi
+    private val accountDao: AccountDao,
+    private val categoryDao: CategoryDao,
+    private val transactionDao: TransactionDao,
+    private val syncManager: SyncManager,
 ) : AnalyticsRepository {
 
-    override suspend fun getAnalyticsData(): Result<AnalyticsData> = apiCall {
-        val accountDtos = api.getAccounts().bodyOrThrow()
-        val accounts = accountDtos.map { it.toDomain() }
+    override suspend fun getAnalyticsData(): Result<AnalyticsData> {
+        syncManager.pushPending()
+        val pull = syncManager.pullTransactions()
 
-        val allExpenses = mutableListOf<Expense>()
-        val allIncomes = mutableListOf<Income>()
+        val accounts = accountDao.getAll().map { it.toDomain() }
+        val transactions = transactionDao.getAll()
+        val expenses = transactions.filter { !it.isIncome }.map { it.toTransaction() as Expense }
+        val incomes = transactions.filter { it.isIncome }.map { it.toTransaction() as Income }
+        val categories = categoryDao.getAll().map { it.toDomain() }
 
-        for (accountDto in accountDtos) {
-            api.getTransactionsByAccountAndPeriod(accountDto.id).bodyOrNull()?.forEach { tx ->
-                if (tx.category.isIncome) {
-                    allIncomes.add(tx.toIncome())
-                } else {
-                    allExpenses.add(tx.toExpense())
-                }
-            }
-        }
-
-        val categories = (allExpenses.map { it.category } + allIncomes.map { it.category })
-            .distinctBy { it.id }
-
-        AnalyticsData(
+        val hasData = accounts.isNotEmpty() || transactions.isNotEmpty() || categories.isNotEmpty()
+        val data = AnalyticsData(
             accounts = accounts,
-            expenses = allExpenses,
-            incomes = allIncomes,
-            categories = categories
+            expenses = expenses,
+            incomes = incomes,
+            categories = categories,
         )
+        return if (hasData) Result.success(data) else pull.map { data }
     }
 }

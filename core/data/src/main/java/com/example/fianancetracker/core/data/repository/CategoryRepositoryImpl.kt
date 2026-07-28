@@ -1,17 +1,19 @@
 package com.example.fianancetracker.core.data.repository
 
-import com.example.fianancetracker.core.data.common.apiCall
-import com.example.fianancetracker.core.data.common.bodyOrThrow
-import com.example.fianancetracker.core.data.mapper.toDomain
-import com.example.fianancetracker.core.data.network.api.FinanceApi
+import com.example.fianancetracker.core.data.db.dao.CategoryDao
+import com.example.fianancetracker.core.data.db.mapper.toDomain
+import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.category.Category
 import com.example.fianancetracker.core.domain.repository.CategoryRepository
 
 class CategoryRepositoryImpl(
-    private val api: FinanceApi
+    private val categoryDao: CategoryDao,
+    private val syncManager: SyncManager,
 ) : CategoryRepository {
 
-    override suspend fun getCategories(): Result<List<Category>> = apiCall {
-        api.getCategories().bodyOrThrow().map { it.toDomain() }
+    override suspend fun getCategories(): Result<List<Category>> {
+        val pull = syncManager.pullCategories()
+        val cached = categoryDao.getAll().map { it.toDomain() }
+        return if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
     }
 }

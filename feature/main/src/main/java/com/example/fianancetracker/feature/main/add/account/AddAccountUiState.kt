@@ -11,9 +11,7 @@ data class AddAccountUiState(
     val showCurrencyPicker: Boolean = false,
     val showErrors: Boolean = false,
 ) {
-    private val amountValid: Boolean get() = (amountDigits.toLongOrNull() ?: 0L) > 0L
-
-    val isValid: Boolean get() = amountValid && name.isNotBlank()
+    val isValid: Boolean get() = name.isNotBlank()
 
     val form: AddAccountFormState
         get() = AddAccountFormState(
@@ -22,6 +20,6 @@ data class AddAccountUiState(
             emoji = emoji,
             currency = Currency.entries.firstOrNull { it.code == currency }?.title ?: currency,
             nameError = showErrors && name.isBlank(),
-            amountError = showErrors && !amountValid,
+            amountError = false,
         )
 }

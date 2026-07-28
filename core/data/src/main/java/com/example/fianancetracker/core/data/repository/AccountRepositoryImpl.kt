@@ -2,18 +2,26 @@ package com.example.fianancetracker.core.data.repository
 
 import com.example.fianancetracker.core.data.common.apiCall
 import com.example.fianancetracker.core.data.common.bodyOrThrow
-import com.example.fianancetracker.core.data.mapper.toDomain
+import com.example.fianancetracker.core.data.db.dao.AccountDao
+import com.example.fianancetracker.core.data.db.mapper.toDomain
+import com.example.fianancetracker.core.data.db.mapper.toEntity
+import com.example.fianancetracker.core.data.mapper.toDomain as dtoToDomain
 import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
+import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.account.Account
 import com.example.fianancetracker.core.domain.repository.AccountRepository
 
 class AccountRepositoryImpl(
-    private val api: FinanceApi
+    private val api: FinanceApi,
+    private val accountDao: AccountDao,
+    private val syncManager: SyncManager,
 ) : AccountRepository {
 
-    override suspend fun getAccounts(): Result<List<Account>> = apiCall {
-        api.getAccounts().bodyOrThrow().map { it.toDomain() }
+    override suspend fun getAccounts(): Result<List<Account>> {
+        val pull = syncManager.pullAccounts()
+        val cached = accountDao.getAll().map { it.toDomain() }
+        return if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
     }
 
     override suspend fun createAccount(
@@ -22,14 +30,16 @@ class AccountRepositoryImpl(
         balance: Double,
         currency: String,
     ): Result<Account> = apiCall {
-        api.createAccount(
+        val dto = api.createAccount(
             AccountRequestDto(
                 name = name,
                 emoji = emoji,
                 balance = balance.toLong().toString(),
                 currency = currency,
             )
-        ).bodyOrThrow().toDomain()
+        ).bodyOrThrow()
+        accountDao.upsert(dto.toEntity())
+        dto.dtoToDomain()
     }
 
     override suspend fun updateAccount(
@@ -39,7 +49,7 @@ class AccountRepositoryImpl(
         balance: Double,
         currency: String,
     ): Result<Account> = apiCall {
-        api.updateAccount(
+        val dto = api.updateAccount(
             id = id.toLong(),
             body = AccountRequestDto(
                 name = name,
@@ -47,6 +57,8 @@ class AccountRepositoryImpl(
                 balance = balance.toLong().toString(),
                 currency = currency,
             )
-        ).bodyOrThrow().toDomain()
+        ).bodyOrThrow()
+        accountDao.upsert(dto.toEntity())
+        dto.dtoToDomain()
     }
 }

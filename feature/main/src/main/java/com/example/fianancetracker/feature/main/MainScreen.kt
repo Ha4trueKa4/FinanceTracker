@@ -20,6 +20,7 @@ import com.example.fianancetracker.core.ui.components.FinanceListContent
 import com.example.fianancetracker.core.ui.components.FinanceLoadingState
 import com.example.fianancetracker.core.ui.components.FinanceTopBar
 import com.example.fianancetracker.core.ui.components.FinanceTotalCard
+import com.example.fianancetracker.core.ui.utils.rememberIsOnline
 import com.example.fianancetracker.feature.main.add.account.AddAccountSheetHost
 import com.example.fianancetracker.feature.main.add.transaction.AddPicker
 import com.example.fianancetracker.feature.main.add.transaction.AddTransactionSheetHost
@@ -35,6 +36,7 @@ fun MainScreen(
     val state by viewModel.uiState.collectAsState()
     val addState by viewModel.addState.collectAsState()
     val addAccountState by viewModel.addAccountState.collectAsState()
+    val isOnline = rememberIsOnline()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -64,26 +66,27 @@ fun MainScreen(
             })
         }
     ) { padding ->
-        val contentModifier = Modifier.padding(padding)
-        when (val content = state.current) {
-            TabContent.NotLoaded, TabContent.Loading -> FinanceLoadingState(modifier = contentModifier)
-            is TabContent.Error -> FinanceErrorState(
-                message = content.message,
-                onRetry = { viewModel.reloadCurrent() },
-                modifier = contentModifier
-            )
-            is TabContent.Empty -> FinanceEmptyState(message = content.message, modifier = contentModifier)
-            is TabContent.Content -> Column(modifier = contentModifier.fillMaxSize()) {
-                FinanceTotalCard(label = content.totalLabel, amount = content.totalAmount)
-                val isTransactionTab = state.selectedTab != MainTab.ACCOUNTS
-                FinanceListContent(
-                    items = content.items,
-                    modifier = Modifier.fillMaxSize().weight(1f),
-                    onItemClick = { id ->
-                        if (isTransactionTab) viewModel.openEditSheet(id)
-                        else viewModel.openEditAccountSheet(id)
-                    }
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (!isOnline) OfflineBanner()
+            when (val content = state.current) {
+                TabContent.NotLoaded, TabContent.Loading -> FinanceLoadingState()
+                is TabContent.Error -> FinanceErrorState(
+                    message = content.message,
+                    onRetry = { viewModel.reloadCurrent() },
                 )
+                is TabContent.Empty -> FinanceEmptyState(message = content.message)
+                is TabContent.Content -> Column(modifier = Modifier.fillMaxSize()) {
+                    FinanceTotalCard(label = content.totalLabel, amount = content.totalAmount)
+                    val isTransactionTab = state.selectedTab != MainTab.ACCOUNTS
+                    FinanceListContent(
+                        items = content.items,
+                        modifier = Modifier.fillMaxSize().weight(1f),
+                        onItemClick = { id ->
+                            if (isTransactionTab) viewModel.openEditSheet(id)
+                            else viewModel.openEditAccountSheet(id)
+                        }
+                    )
+                }
             }
         }
     }
