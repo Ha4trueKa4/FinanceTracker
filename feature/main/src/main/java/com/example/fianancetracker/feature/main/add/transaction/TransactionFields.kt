@@ -1,5 +1,4 @@
 package com.example.fianancetracker.feature.main.add.transaction
-import com.example.fianancetracker.feature.main.add.common.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,6 +15,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.feature.main.add.common.*
 
 @Composable
 internal fun CommentField(
@@ -47,4 +47,26 @@ internal fun CommentField(
             }
         }
     )
+}
+
+internal fun typeDigit(value: Int, partial: Int, digit: Int, max: Int): Triple<Int, Int, Boolean> {
+    val tensMax = max / 10
+    return when (partial) {
+        0 -> {
+            val complete = digit > tensMax
+            Triple(digit, if (complete) 2 else 1, complete)
+        }
+        1 -> {
+            val candidate = value * 10 + digit
+            if (candidate <= max) {
+                Triple(candidate, 2, true)
+            } else {
+                Triple(digit, if (digit > tensMax) 2 else 1, digit > tensMax)
+            }
+        }
+        else -> {
+            val complete = digit > tensMax
+            Triple(digit, if (complete) 2 else 1, complete)
+        }
+    }
 }

@@ -5,3 +5,5 @@ enum class Currency(val code: String, val symbol: String, val title: String) {
     USD("USD", "$", "Доллар США"),
     EUR("EUR", "€", "Евро"),
 }
+
+internal val ACCOUNT_EMOJIS = listOf("🏦", "💳", "🐖", "💵", "💰", "🪙", "🏧", "💶")

@@ -1,10 +1,13 @@
 package com.example.fianancetracker.feature.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -13,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.components.FinanceEmptyState
 import com.example.fianancetracker.core.ui.components.FinanceErrorState
 import com.example.fianancetracker.core.ui.components.FinanceFloatingActionButton
@@ -125,4 +130,18 @@ fun MainScreen(
             onCurrencyPickerDismiss = viewModel::dismissAccountCurrencyPicker,
         )
     }
+}
+
+@Composable
+fun OfflineBanner(modifier: Modifier = Modifier) {
+    Text(
+        text = "Нет подключения к интернету — показаны сохранённые данные",
+        color = MaterialTheme.colorScheme.onErrorContainer,
+        style = MaterialTheme.typography.bodySmall,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }

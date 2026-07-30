@@ -1,14 +1,17 @@
 package com.example.fianancetracker.feature.main.add.transaction
-import com.example.fianancetracker.feature.main.add.common.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +22,75 @@ import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.components.FilterRow
 import com.example.fianancetracker.core.ui.components.FilterRowDefaults
 import com.example.fianancetracker.feature.main.R
+import com.example.fianancetracker.feature.main.add.common.*
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddTransactionSheetHost(
+    state: AddTransactionUiState,
+    onDismiss: () -> Unit,
+    onKeyClick: (String) -> Unit,
+    onBackspace: () -> Unit,
+    onConfirm: () -> Unit,
+    onCommentChange: (String) -> Unit,
+    onCategoryClick: () -> Unit,
+    onDateClick: () -> Unit,
+    onTimeClick: () -> Unit,
+    onAccountClick: () -> Unit,
+    onPickCategory: (Long) -> Unit,
+    onPickAccount: (String) -> Unit,
+    onPickDate: (java.time.LocalDate) -> Unit,
+    onPickTime: (java.time.LocalTime) -> Unit,
+    onPickerDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = null,
+        containerColor = Color.White,
+        contentWindowInsets = { WindowInsets(0) },
+    ) {
+        AddTransactionSheetContent(
+            state = state.form,
+            onCategoryClick = onCategoryClick,
+            onDateClick = onDateClick,
+            onTimeClick = onTimeClick,
+            onAccountClick = onAccountClick,
+            onKeyClick = onKeyClick,
+            onBackspace = onBackspace,
+            onConfirm = onConfirm,
+            onCommentChange = onCommentChange,
+        )
+    }
+
+    when (state.openPicker) {
+        AddPicker.CATEGORY -> CategoryPickerSheet(
+            categories = state.visibleCategories,
+            selectedId = state.selectedCategoryId,
+            onSelect = onPickCategory,
+            onDismiss = onPickerDismiss,
+        )
+        AddPicker.ACCOUNT -> AccountPickerSheet(
+            accounts = state.accounts,
+            selectedId = state.selectedAccountId,
+            onSelect = onPickAccount,
+            onDismiss = onPickerDismiss,
+        )
+        AddPicker.DATE -> DatePickerDialogM3(
+            initial = state.date,
+            onConfirm = onPickDate,
+            onDismiss = onPickerDismiss,
+        )
+        AddPicker.TIME -> TimePickerSheet(
+            initial = state.time,
+            onConfirm = onPickTime,
+            onDismiss = onPickerDismiss,
+        )
+        AddPicker.NONE -> Unit
+    }
+}
 
 @Composable
 fun AddTransactionSheetContent(
