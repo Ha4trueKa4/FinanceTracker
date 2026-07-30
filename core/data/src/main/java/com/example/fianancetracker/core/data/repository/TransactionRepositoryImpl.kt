@@ -21,6 +21,8 @@ import com.example.fianancetracker.core.domain.transaction.Transaction
 import com.example.fianancetracker.core.domain.transaction.TransactionDetails
 import com.example.fianancetracker.core.domain.transaction.TransactionDraft
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class TransactionRepositoryImpl(
     private val api: FinanceApi,
@@ -32,57 +34,61 @@ class TransactionRepositoryImpl(
     private val gson: Gson,
 ) : TransactionRepository {
 
-    override suspend fun getTransactions(isIncome: Boolean): Result<List<Transaction>> {
-        syncManager.pushPending()
-        val pull = syncManager.pullTransactions()
-        val cached = transactionDao.getByIncome(isIncome).map { it.toTransaction() }
-        return if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
-    }
+    override suspend fun getTransactions(isIncome: Boolean): Result<List<Transaction>> =
+        withContext(Dispatchers.IO) {
+            syncManager.pushPending()
+            val pull = syncManager.pullTransactions()
+            val cached = transactionDao.getByIncome(isIncome).map { it.toTransaction() }
+            if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
+        }
 
-    override suspend fun getTransactionDetails(id: String): Result<TransactionDetails> {
-        val local = transactionDao.getByLocalId(id.toLong())
-        if (local != null) return Result.success(local.toDetails())
+    override suspend fun getTransactionDetails(id: String): Result<TransactionDetails> =
+        withContext(Dispatchers.IO) {
+            val local = transactionDao.getByLocalId(id.toLong())
+            if (local != null) return@withContext Result.success(local.toDetails())
 
-        return apiCall { api.getTransactionById(id.toLong()).bodyOrThrow().toDetails() }
-    }
+            apiCall { api.getTransactionById(id.toLong()).bodyOrThrow().toDetails() }
+        }
 
-    override suspend fun createTransaction(draft: TransactionDraft): Result<Unit> {
-        val account = accountDao.getById(draft.accountId)
-        val category = categoryDao.getById(draft.categoryId)
+    override suspend fun createTransaction(draft: TransactionDraft): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val account = accountDao.getById(draft.accountId)
+            val category = categoryDao.getById(draft.categoryId)
 
-        val localId = transactionDao.insert(
-            entityFor(
-                localId = 0,
-                serverId = null,
-                draft = draft,
-                accountName = account?.name,
-                category = category,
+            val localId = transactionDao.insert(
+                entityFor(
+                    localId = 0,
+                    serverId = null,
+                    draft = draft,
+                    accountName = account?.name,
+                    category = category,
+                )
             )
-        )
-        enqueue(PendingType.CREATE_TRANSACTION, localId, draft)
-        syncManager.pushPending()
-        return Result.success(Unit)
-    }
+            enqueue(PendingType.CREATE_TRANSACTION, localId, draft)
+            syncManager.pushPending()
+            Result.success(Unit)
+        }
 
-    override suspend fun updateTransaction(id: String, draft: TransactionDraft): Result<Unit> {
-        val localId = id.toLong()
-        val existing = transactionDao.getByLocalId(localId)
-        val account = accountDao.getById(draft.accountId)
-        val category = categoryDao.getById(draft.categoryId)
+    override suspend fun updateTransaction(id: String, draft: TransactionDraft): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val localId = id.toLong()
+            val existing = transactionDao.getByLocalId(localId)
+            val account = accountDao.getById(draft.accountId)
+            val category = categoryDao.getById(draft.categoryId)
 
-        transactionDao.update(
-            entityFor(
-                localId = localId,
-                serverId = existing?.serverId,
-                draft = draft,
-                accountName = account?.name,
-                category = category,
+            transactionDao.update(
+                entityFor(
+                    localId = localId,
+                    serverId = existing?.serverId,
+                    draft = draft,
+                    accountName = account?.name,
+                    category = category,
+                )
             )
-        )
-        enqueue(PendingType.UPDATE_TRANSACTION, localId, draft)
-        syncManager.pushPending()
-        return Result.success(Unit)
-    }
+            enqueue(PendingType.UPDATE_TRANSACTION, localId, draft)
+            syncManager.pushPending()
+            Result.success(Unit)
+        }
 
     private fun entityFor(
         localId: Long,

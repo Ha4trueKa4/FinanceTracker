@@ -11,6 +11,8 @@ import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
 import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.account.Account
 import com.example.fianancetracker.core.domain.repository.AccountRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AccountRepositoryImpl(
     private val api: FinanceApi,
@@ -18,10 +20,10 @@ class AccountRepositoryImpl(
     private val syncManager: SyncManager,
 ) : AccountRepository {
 
-    override suspend fun getAccounts(): Result<List<Account>> {
+    override suspend fun getAccounts(): Result<List<Account>> = withContext(Dispatchers.IO) {
         val pull = syncManager.pullAccounts()
         val cached = accountDao.getAll().map { it.toDomain() }
-        return if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
+        if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
     }
 
     override suspend fun createAccount(

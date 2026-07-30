@@ -10,6 +10,8 @@ import com.example.fianancetracker.core.domain.analytics.AnalyticsData
 import com.example.fianancetracker.core.domain.expense.Expense
 import com.example.fianancetracker.core.domain.income.Income
 import com.example.fianancetracker.core.domain.repository.AnalyticsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AnalyticsRepositoryImpl(
     private val accountDao: AccountDao,
@@ -18,7 +20,7 @@ class AnalyticsRepositoryImpl(
     private val syncManager: SyncManager,
 ) : AnalyticsRepository {
 
-    override suspend fun getAnalyticsData(): Result<AnalyticsData> {
+    override suspend fun getAnalyticsData(): Result<AnalyticsData> = withContext(Dispatchers.IO) {
         syncManager.pushPending()
         val pull = syncManager.pullTransactions()
 
@@ -35,6 +37,6 @@ class AnalyticsRepositoryImpl(
             incomes = incomes,
             categories = categories,
         )
-        return if (hasData) Result.success(data) else pull.map { data }
+        if (hasData) Result.success(data) else pull.map { data }
     }
 }
