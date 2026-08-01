@@ -11,6 +11,8 @@ fun AccountDto.toEntity(): AccountEntity = AccountEntity(
     emoji = emoji,
     balance = balance.toDoubleOrNull() ?: 0.0,
     currency = currency,
+    serverId = id,
+    synced = true,
 )
 
 fun AccountEntity.toDomain(): Account = Account(

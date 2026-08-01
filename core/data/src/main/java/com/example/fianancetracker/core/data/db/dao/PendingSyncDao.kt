@@ -19,4 +19,8 @@ interface PendingSyncDao {
 
     @Query("DELETE FROM pending_sync WHERE localId = :localId")
     suspend fun deleteById(localId: Long)
+
+    // После сверки id счёта: перевести отложенные операции по счёту на новый серверный id.
+    @Query("UPDATE pending_sync SET targetId = :newId WHERE targetId = :oldId AND type = 'UPDATE_ACCOUNT'")
+    suspend fun retargetAccountOps(oldId: Long, newId: Long)
 }

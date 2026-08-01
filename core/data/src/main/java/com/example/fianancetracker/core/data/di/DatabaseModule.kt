@@ -2,6 +2,7 @@ package com.example.fianancetracker.core.data.di
 
 import androidx.room.Room
 import com.example.fianancetracker.core.data.db.FinanceDatabase
+import com.example.fianancetracker.core.data.db.MIGRATION_2_3
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -11,7 +12,7 @@ val databaseModule = module {
             androidContext(),
             FinanceDatabase::class.java,
             "finance.db",
-        ).fallbackToDestructiveMigration(true).build()
+        ).addMigrations(MIGRATION_2_3).build()
     }
 
     single { get<FinanceDatabase>().accountDao() }

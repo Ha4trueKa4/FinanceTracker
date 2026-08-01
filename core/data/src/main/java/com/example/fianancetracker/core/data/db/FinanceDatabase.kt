@@ -18,7 +18,7 @@ import com.example.fianancetracker.core.data.db.entity.TransactionEntity
         TransactionEntity::class,
         PendingSyncEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class FinanceDatabase : RoomDatabase() {
