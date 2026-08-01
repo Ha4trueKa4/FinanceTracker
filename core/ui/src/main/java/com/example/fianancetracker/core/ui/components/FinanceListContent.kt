@@ -18,7 +18,8 @@ import com.example.fianancetracker.core.ui.model.ListItemModel
 fun FinanceListContent(
     items: List<ListItemModel>,
     modifier: Modifier = Modifier,
-    showDividers: Boolean = false
+    showDividers: Boolean = false,
+    onItemClick: (String) -> Unit = {},
 ) {
     if (items.isEmpty()) {
         Box(
@@ -39,14 +40,15 @@ fun FinanceListContent(
                 if (showDividers) {
                     FinanceListItem(
                         item = item,
-                        modifier = Modifier.padding(horizontal = 0.dp)
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        onClick = { onItemClick(item.id) }
                     )
                     HorizontalDivider(
                         thickness = 0.5.dp,
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                     )
                 } else {
-                    FinanceListItem(item = item)
+                    FinanceListItem(item = item, onClick = { onItemClick(item.id) })
                 }
             }
         }

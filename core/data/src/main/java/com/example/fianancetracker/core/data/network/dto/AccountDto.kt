@@ -11,6 +11,13 @@ data class AccountDto(
     val updatedAt: String
 )
 
+data class AccountRequestDto(
+    val name: String,
+    val emoji: String,
+    val balance: String,
+    val currency: String
+)
+
 data class AccountBriefDto(
     val id: Long,
     val name: String,

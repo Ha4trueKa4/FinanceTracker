@@ -8,7 +8,9 @@ fun AccountDto.toDomain(): Account {
     return Account(
         id = id.toString(),
         name = name,
+        emoji = emoji,
         balance = balance.toDoubleOrNull() ?: 0.0,
+        currency = currency,
         cardNumber = "•••• 0000",
         type = AccountType.DEBIT
     )

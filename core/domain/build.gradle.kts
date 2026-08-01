@@ -15,3 +15,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
+
+dependencies {
+    // Flow фигурирует в публичных интерфейсах репозиториев — отдаём как api.
+    api(libs.kotlinx.coroutines.android)
+}

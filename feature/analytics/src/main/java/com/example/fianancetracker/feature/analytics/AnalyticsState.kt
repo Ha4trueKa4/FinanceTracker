@@ -6,11 +6,6 @@ import com.example.fianancetracker.core.domain.category.Category
 import com.example.fianancetracker.core.ui.model.ListItemModel
 import com.example.fianancetracker.feature.analytics.components.PieChartSlice
 
-/**
- * Готовое к рендеру состояние аналитики. Все подписи (бэйджи фильтров, суммы) уже
- * посчитаны во ViewModel — экран только отображает. `filter`/`accounts`/`categories`
- * нужны боттом-шитам как исходные значения для выбора.
- */
 data class AnalyticsState(
     val filter: AnalyticsFilter = AnalyticsFilter(),
     val accounts: List<Account> = emptyList(),

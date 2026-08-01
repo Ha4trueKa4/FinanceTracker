@@ -1,6 +1,5 @@
 package com.example.fianancetracker.feature.analytics
 
-/** Состояние экрана аналитики. Данные несёт [AnalyticsState]. */
 sealed interface AnalyticsUiState {
     data object Loading : AnalyticsUiState
     data object Empty : AnalyticsUiState

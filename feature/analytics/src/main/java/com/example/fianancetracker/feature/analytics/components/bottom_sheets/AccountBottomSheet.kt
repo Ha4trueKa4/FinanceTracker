@@ -98,7 +98,7 @@ fun AccountBottomSheet(
 
             accounts.forEachIndexed { index, account ->
                 AccountFilterRow(
-                    emoji = accountEmoji(account.type),
+                    emoji = account.emoji.ifEmpty { accountEmoji(account.type) },
                     name = account.name,
                     subtitle = account.type.displayName,
                     isSelected = localSelected == account.name,

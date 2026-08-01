@@ -104,7 +104,6 @@ fun FinancePieChart(
             maxLines = 3,
             maxItemsInEachRow = 10
 
-
         ) {
             slices.forEach { slice ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
