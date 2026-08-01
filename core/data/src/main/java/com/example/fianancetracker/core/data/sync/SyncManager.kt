@@ -10,9 +10,13 @@ import com.example.fianancetracker.core.data.db.entity.CategoryEntity
 import com.example.fianancetracker.core.data.db.entity.PendingType
 import com.example.fianancetracker.core.data.db.mapper.toEntity
 import com.example.fianancetracker.core.data.network.api.FinanceApi
+import com.example.fianancetracker.core.data.network.dto.AccountDto
+import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
 import com.example.fianancetracker.core.data.network.dto.TransactionRequestDto
 import com.example.fianancetracker.core.domain.common.AppError
 import com.google.gson.Gson
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SyncManager(
     private val api: FinanceApi,
@@ -23,48 +27,83 @@ class SyncManager(
     private val gson: Gson,
 ) {
 
-    suspend fun syncNow(): Result<Unit> {
-        val push = pushPending()
-        if (push.isFailure) return push
+    // Один mutex на все входы синхронизации: воркер, коннективити-триггер и репозитории
+    // могут дёрнуть push/sync одновременно — без сериализации одна pending-операция
+    // отправилась бы на сервер дважды (дубликат).
+    private val syncMutex = Mutex()
+
+    suspend fun syncNow(): Result<Unit> = syncMutex.withLock {
+        val push = doPushPending()
+        if (push.isFailure) return@withLock push
         pullAccounts()
         pullCategories()
-        return pullTransactions()
+        pullTransactions()
     }
 
-    suspend fun pushPending(): Result<Unit> {
+    suspend fun pushPending(): Result<Unit> = syncMutex.withLock { doPushPending() }
+
+    private suspend fun doPushPending(): Result<Unit> {
         val ops = pendingSyncDao.getAll()
         for (op in ops) {
             val result = runOp(op.type, op.targetId, op.payload)
-            result.fold(
-                onSuccess = { pendingSyncDao.deleteById(op.localId) },
-                onFailure = { error ->
-                    if (error is AppError.NoInternet) return Result.failure(error)
+            val error = result.exceptionOrNull()
+            when {
+                // Успех — операция доехала, убираем из очереди.
+                result.isSuccess -> pendingSyncDao.deleteById(op.localId)
+                // Постоянная клиентская ошибка (4xx): операция невалидна, повтор не поможет —
+                // выкидываем, иначе она навсегда заблокирует очередь.
+                error is AppError.Server && error.code in 400..499 ->
                     pendingSyncDao.deleteById(op.localId)
-                }
-            )
+                // Нет сети / 5xx / неизвестная ошибка — НЕ теряем операцию:
+                // оставляем в очереди и выходим, воркер повторит попытку позже.
+                else -> return Result.failure(error ?: AppError.Unknown(null))
+            }
         }
         return Result.success(Unit)
     }
 
-    private suspend fun runOp(type: String, localId: Long, payload: String): Result<Unit> =
+    private suspend fun runOp(type: String, targetId: Long, payload: String): Result<Unit> =
         when (type) {
             PendingType.CREATE_TRANSACTION.name -> apiCall {
-                val dto = gson.fromJson(payload, TransactionRequestDto::class.java)
+                val dto = resolveTxAccount(targetId, payload)
                 val created = api.createTransaction(dto).bodyOrThrow()
-                transactionDao.markSynced(localId, created.id)
+                transactionDao.markSynced(targetId, created.id)
                 Unit
             }
 
             PendingType.UPDATE_TRANSACTION.name -> {
-                val serverId = transactionDao.getByLocalId(localId)?.serverId
+                val serverId = transactionDao.getByLocalId(targetId)?.serverId
                 if (serverId == null) {
                     Result.failure(AppError.NoInternet)
                 } else apiCall {
-                    val dto = gson.fromJson(payload, TransactionRequestDto::class.java)
+                    val dto = resolveTxAccount(targetId, payload)
                     api.updateTransaction(serverId, dto).bodyOrThrow()
-                    transactionDao.getByLocalId(localId)?.let {
+                    transactionDao.getByLocalId(targetId)?.let {
                         transactionDao.update(it.copy(synced = true))
                     }
+                    Unit
+                }
+            }
+
+            PendingType.CREATE_ACCOUNT.name -> apiCall {
+                val dto = gson.fromJson(payload, AccountRequestDto::class.java)
+                val created = api.createAccount(dto).bodyOrThrow()
+                // Сверка: временный локальный id → серверный (счёт, ссылки транзакций, очередь).
+                accountDao.reassignId(oldId = targetId, newId = created.id)
+                transactionDao.reassignAccount(oldAccountId = targetId, newAccountId = created.id)
+                pendingSyncDao.retargetAccountOps(oldId = targetId, newId = created.id)
+                Unit
+            }
+
+            PendingType.UPDATE_ACCOUNT.name -> {
+                val serverId = accountDao.getById(targetId)?.serverId
+                if (serverId == null) {
+                    // Счёт ещё не создан на сервере — оставляем операцию в очереди до следующего цикла.
+                    Result.failure(AppError.Unknown("Счёт ещё не синхронизирован"))
+                } else apiCall {
+                    val dto = gson.fromJson(payload, AccountRequestDto::class.java)
+                    api.updateAccount(serverId, dto).bodyOrThrow()
+                    accountDao.markSynced(targetId)
                     Unit
                 }
             }
@@ -72,9 +111,27 @@ class SyncManager(
             else -> Result.success(Unit)
         }
 
+    // В payload транзакции id счёта мог быть временным (оффлайн-счёт). Берём актуальный
+    // id из сущности транзакции — после сверки счёта он уже указывает на серверный.
+    private suspend fun resolveTxAccount(txLocalId: Long, payload: String): TransactionRequestDto {
+        val dto = gson.fromJson(payload, TransactionRequestDto::class.java)
+        val accountId = transactionDao.getByLocalId(txLocalId)?.accountId ?: dto.accountId
+        if (accountId <= 0) throw AppError.Unknown("Счёт транзакции ещё не синхронизирован")
+        return dto.copy(accountId = accountId)
+    }
+
+    // Не затираем локальные несинхронизированные счета (оффлайн-создание/правку) данными сервера.
+    private suspend fun upsertServerAccounts(remote: List<AccountDto>) {
+        val localById = accountDao.getAll().associateBy { it.id }
+        val toUpsert = remote.mapNotNull { dto ->
+            val local = localById[dto.id]
+            if (local != null && !local.synced) null else dto.toEntity()
+        }
+        if (toUpsert.isNotEmpty()) accountDao.upsertAll(toUpsert)
+    }
+
     suspend fun pullAccounts(): Result<Unit> = apiCall {
-        val accounts = api.getAccounts().bodyOrThrow().map { it.toEntity() }
-        accountDao.upsertAll(accounts)
+        upsertServerAccounts(api.getAccounts().bodyOrThrow())
         Unit
     }
 
@@ -86,12 +143,16 @@ class SyncManager(
 
     suspend fun pullTransactions(): Result<Unit> = apiCall {
         val accounts = api.getAccounts().bodyOrThrow()
-        accountDao.upsertAll(accounts.map { it.toEntity() })
+        upsertServerAccounts(accounts)
 
         val categories = mutableMapOf<Long, CategoryEntity>()
         val serverIds = mutableListOf<Long>()
         for (account in accounts) {
-            val transactions = api.getTransactionsByAccountAndPeriod(account.id).body().orEmpty()
+            // Без явного периода сервер отдаёт только транзакции за сегодня, и тогда
+            // deleteSyncedNotIn ниже вычистит всю остальную историю. Тянем весь диапазон.
+            val transactions = api
+                .getTransactionsByAccountAndPeriod(account.id, PULL_START_DATE, PULL_END_DATE)
+                .body().orEmpty()
             for (tx in transactions) {
                 serverIds += tx.id
                 categories[tx.category.id] = CategoryEntity(
@@ -113,5 +174,11 @@ class SyncManager(
         if (serverIds.isEmpty()) transactionDao.deleteAllSynced()
         else transactionDao.deleteSyncedNotIn(serverIds)
         Unit
+    }
+
+    private companion object {
+        // Полный диапазон: тянем всю историю транзакций, а не только «сегодня».
+        const val PULL_START_DATE = "1970-01-01"
+        const val PULL_END_DATE = "2100-01-01"
     }
 }
