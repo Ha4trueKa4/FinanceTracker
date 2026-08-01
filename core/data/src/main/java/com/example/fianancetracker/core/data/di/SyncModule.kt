@@ -8,7 +8,7 @@ import org.koin.androidx.workmanager.dsl.worker
 import org.koin.dsl.module
 
 val syncModule = module {
-    single { SyncManager(get(), get(), get(), get(), get(), get()) }
+    single { SyncManager(get(), get(), get(), get(), get(), get(), get(), get()) }
     single { ConnectivityObserver(androidContext()) }
 
     worker { SyncWorker(androidContext(), get(), get()) }

@@ -1,7 +1,7 @@
 package com.example.fianancetracker.core.data.repository
 
-import com.example.fianancetracker.core.data.db.dao.AccountDao
-import com.example.fianancetracker.core.data.db.dao.PendingSyncDao
+import com.example.fianancetracker.core.data.datasource.local.AccountLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.PendingSyncLocalDataSource
 import com.example.fianancetracker.core.data.db.entity.AccountEntity
 import com.example.fianancetracker.core.data.db.entity.PendingSyncEntity
 import com.example.fianancetracker.core.data.db.entity.PendingType
@@ -17,15 +17,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
+/** Репозиторий счетов: offline-first поверх локального источника + отложенная синхронизация. */
 class AccountRepositoryImpl(
-    private val accountDao: AccountDao,
+    private val local: AccountLocalDataSource,
     private val syncManager: SyncManager,
-    private val pendingSyncDao: PendingSyncDao,
+    private val pendingSync: PendingSyncLocalDataSource,
     private val gson: Gson,
 ) : AccountRepository {
 
     override fun observeAccounts(): Flow<List<Account>> =
-        accountDao.observeAll().map { list -> list.map { it.toDomain() } }
+        local.observeAll().map { list -> list.map { it.toDomain() } }
 
     override suspend fun refresh(): Result<Unit> = withContext(Dispatchers.IO) {
         syncManager.pushPending().fold(
@@ -36,7 +37,7 @@ class AccountRepositoryImpl(
 
     override suspend fun getAccounts(): Result<List<Account>> = withContext(Dispatchers.IO) {
         val pull = syncManager.pullAccounts()
-        val cached = accountDao.getAll().map { it.toDomain() }
+        val cached = local.getAll().map { it.toDomain() }
         if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
     }
 
@@ -48,7 +49,7 @@ class AccountRepositoryImpl(
         balance: Double,
         currency: String,
     ): Result<Account> = withContext(Dispatchers.IO) {
-        val tempId = (accountDao.minId() ?: 0L).coerceAtMost(0L) - 1
+        val tempId = (local.minId() ?: 0L).coerceAtMost(0L) - 1
         val entity = AccountEntity(
             id = tempId,
             name = name,
@@ -58,7 +59,7 @@ class AccountRepositoryImpl(
             serverId = null,
             synced = false,
         )
-        accountDao.upsert(entity)
+        local.upsert(entity)
         enqueue(PendingType.CREATE_ACCOUNT, tempId, name, emoji, balance, currency)
         syncManager.pushPending()
         Result.success(entity.toDomain())
@@ -72,7 +73,7 @@ class AccountRepositoryImpl(
         currency: String,
     ): Result<Account> = withContext(Dispatchers.IO) {
         val localId = id.toLong()
-        val existing = accountDao.getById(localId)
+        val existing = local.getById(localId)
             ?: return@withContext Result.failure(AppError.Unknown("Счёт не найден"))
         val updated = existing.copy(
             name = name,
@@ -81,7 +82,7 @@ class AccountRepositoryImpl(
             currency = currency,
             synced = false,
         )
-        accountDao.upsert(updated)
+        local.upsert(updated)
         enqueue(PendingType.UPDATE_ACCOUNT, localId, name, emoji, balance, currency)
         syncManager.pushPending()
         Result.success(updated.toDomain())
@@ -95,7 +96,7 @@ class AccountRepositoryImpl(
         balance: Double,
         currency: String,
     ) {
-        pendingSyncDao.insert(
+        pendingSync.insert(
             PendingSyncEntity(
                 type = type.name,
                 targetId = targetId,

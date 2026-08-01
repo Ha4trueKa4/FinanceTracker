@@ -1,6 +1,12 @@
 package com.example.fianancetracker.core.data.di
 
 import com.example.fianancetracker.core.data.BuildConfig
+import com.example.fianancetracker.core.data.datasource.remote.AccountRemoteDataSource
+import com.example.fianancetracker.core.data.datasource.remote.AccountRemoteDataSourceImpl
+import com.example.fianancetracker.core.data.datasource.remote.CategoryRemoteDataSource
+import com.example.fianancetracker.core.data.datasource.remote.CategoryRemoteDataSourceImpl
+import com.example.fianancetracker.core.data.datasource.remote.TransactionRemoteDataSource
+import com.example.fianancetracker.core.data.datasource.remote.TransactionRemoteDataSourceImpl
 import com.example.fianancetracker.core.data.network.api.AuthInterceptor
 import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.network.api.RetryInterceptor
@@ -50,6 +56,10 @@ val networkModule = module {
             .build()
             .create(FinanceApi::class.java)
     }
+
+    single<AccountRemoteDataSource> { AccountRemoteDataSourceImpl(get()) }
+    single<TransactionRemoteDataSource> { TransactionRemoteDataSourceImpl(get()) }
+    single<CategoryRemoteDataSource> { CategoryRemoteDataSourceImpl(get()) }
 }
 
 val repositoryModule = module {
