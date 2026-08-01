@@ -15,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +32,7 @@ import com.example.fianancetracker.core.ui.utils.rememberIsOnline
 import com.example.fianancetracker.feature.main.add.account.AddAccountSheetHost
 import com.example.fianancetracker.feature.main.add.transaction.AddPicker
 import com.example.fianancetracker.feature.main.add.transaction.AddTransactionSheetHost
+import com.example.fianancetracker.feature.main.add.transaction.DatePickerDialogM3
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,13 +46,14 @@ fun MainScreen(
     val addState by viewModel.addState.collectAsState()
     val addAccountState by viewModel.addAccountState.collectAsState()
     val isOnline = rememberIsOnline()
+    var showDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             FinanceTopBar(
                 dateText = state.dateLabel,
-                onCalendarClick = {},
+                onCalendarClick = { showDatePicker = true },
                 onAction1Click = onNavigateToAnalytics
             )
         },
@@ -128,6 +133,17 @@ fun MainScreen(
             onCurrencyClick = viewModel::openAccountCurrencyPicker,
             onPickCurrency = viewModel::selectAccountCurrency,
             onCurrencyPickerDismiss = viewModel::dismissAccountCurrencyPicker,
+        )
+    }
+
+    if (showDatePicker) {
+        DatePickerDialogM3(
+            initial = state.selectedDate,
+            onConfirm = { day ->
+                viewModel.selectDay(day)
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false },
         )
     }
 }

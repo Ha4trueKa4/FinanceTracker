@@ -22,6 +22,8 @@ import com.example.fianancetracker.core.domain.transaction.TransactionDetails
 import com.example.fianancetracker.core.domain.transaction.TransactionDraft
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class TransactionRepositoryImpl(
@@ -34,13 +36,20 @@ class TransactionRepositoryImpl(
     private val gson: Gson,
 ) : TransactionRepository {
 
-    override suspend fun getTransactions(isIncome: Boolean): Result<List<Transaction>> =
-        withContext(Dispatchers.IO) {
-            syncManager.pushPending()
-            val pull = syncManager.pullTransactions()
-            val cached = transactionDao.getByIncome(isIncome).map { it.toTransaction() }
-            if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
-        }
+    override fun observeTransactions(
+        isIncome: Boolean,
+        startDate: String,
+        endDate: String,
+    ): Flow<List<Transaction>> =
+        transactionDao.observeByIncomeBetween(isIncome, startDate, endDate)
+            .map { list -> list.map { it.toTransaction() } }
+
+    override suspend fun refresh(): Result<Unit> = withContext(Dispatchers.IO) {
+        syncManager.pushPending().fold(
+            onSuccess = { syncManager.pullTransactions() },
+            onFailure = { Result.failure(it) },
+        )
+    }
 
     override suspend fun getTransactionDetails(id: String): Result<TransactionDetails> =
         withContext(Dispatchers.IO) {

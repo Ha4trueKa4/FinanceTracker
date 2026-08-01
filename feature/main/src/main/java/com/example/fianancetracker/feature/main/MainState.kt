@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import com.example.fianancetracker.core.ui.model.ListItemModel
+import java.time.LocalDate
 
 data class MainUiState(
     val dateLabel: String = "",
+    val selectedDate: LocalDate = LocalDate.now(),
     val selectedTab: MainTab = MainTab.EXPENSES,
     val tabs: Map<MainTab, TabContent> = MainTab.entries.associateWith { TabContent.NotLoaded },
 ) {

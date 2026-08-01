@@ -17,9 +17,13 @@ import com.example.fianancetracker.feature.main.add.account.AddAccountUiState
 import com.example.fianancetracker.feature.main.add.transaction.AddPicker
 import com.example.fianancetracker.feature.main.add.transaction.AddTransactionUiState
 import com.example.fianancetracker.feature.main.add.common.appendKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -48,65 +52,124 @@ class MainViewModel(
 
     private var loadedAccounts: List<Account> = emptyList()
 
+    // Сигнал сети по табу: завершилась ли хоть одна попытка обновления и с какой ошибкой.
+    // Нужен, чтобы отличать «пустой список из БД, сеть ещё грузится» (Loading)
+    // от «пусто и сеть ответила» (Empty/Error). Данные в UI всегда идут из Room-Flow.
+    private data class TabSignal(val refreshed: Boolean = false, val error: String? = null)
+
+    private val signals: Map<MainTab, MutableStateFlow<TabSignal>> =
+        MainTab.entries.associateWith { MutableStateFlow(TabSignal()) }
+
+    private val collecting = mutableSetOf<MainTab>()
+
+    // Выбранный день для экранов расходов/доходов (кнопка-календарь в шапке). Реактивный —
+    // при смене дня flatMapLatest ниже перезапрашивает локальную БД без похода в сеть.
+    private val selectedDay = MutableStateFlow(LocalDate.now())
+
     init {
+        viewModelScope.launch {
+            selectedDay.collect { day ->
+                _uiState.update { it.copy(dateLabel = day.format(dateFormatter), selectedDate = day) }
+            }
+        }
         selectTab(MainTab.EXPENSES)
     }
 
     fun selectTab(tab: MainTab) {
         _uiState.update { it.copy(selectedTab = tab) }
-        if (_uiState.value.tabs.getValue(tab) is TabContent.NotLoaded) {
-            loadTab(tab)
-        }
+        startCollecting(tab)
+        refresh(tab)
     }
 
-    fun reloadCurrent() = loadTab(_uiState.value.selectedTab)
+    fun selectDay(day: LocalDate) {
+        selectedDay.value = day
+    }
+
+    fun reloadCurrent() = refresh(_uiState.value.selectedTab)
 
     private fun setTab(tab: MainTab, content: TabContent) {
         _uiState.update { it.copy(tabs = it.tabs + (tab to content)) }
     }
 
-    private fun loadTab(tab: MainTab) {
-        setTab(tab, TabContent.Loading)
+    // Подписка на Room-Flow таба: живёт до onCleared, переэмитит при любом изменении БД
+    // (в т.ч. после фоновой синхронизации SyncWorker) — экран обновляется сам.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun startCollecting(tab: MainTab) {
+        if (!collecting.add(tab)) return
+        val signal = signals.getValue(tab)
         viewModelScope.launch {
             when (tab) {
-                MainTab.EXPENSES -> loadTransactions(tab, isIncome = false, totalLabel = "расходы всего")
-                MainTab.INCOMES -> loadTransactions(tab, isIncome = true, totalLabel = "доходы всего")
-                MainTab.ACCOUNTS -> loadAccounts()
+                MainTab.EXPENSES -> combine(
+                    observeTransactionsForSelectedDay(isIncome = false), signal,
+                ) { list, s -> transactionsContent(list, isIncome = false, "расходы всего", "Нет расходов", s) }
+                    .collect { setTab(tab, it) }
+
+                MainTab.INCOMES -> combine(
+                    observeTransactionsForSelectedDay(isIncome = true), signal,
+                ) { list, s -> transactionsContent(list, isIncome = true, "доходы всего", "Нет доходов", s) }
+                    .collect { setTab(tab, it) }
+
+                MainTab.ACCOUNTS -> combine(
+                    accountRepository.observeAccounts().onEach { loadedAccounts = it }, signal,
+                ) { list, s -> accountsContent(list, s) }
+                    .collect { setTab(tab, it) }
             }
         }
     }
 
-    private suspend fun loadTransactions(tab: MainTab, isIncome: Boolean, totalLabel: String) {
-        transactionRepository.getTransactions(isIncome)
-            .onSuccess { transactions ->
-                setTab(tab, if (transactions.isEmpty()) {
-                    TabContent.Empty(if (isIncome) "Нет доходов" else "Нет расходов")
-                } else {
-                    TabContent.Content(
-                        totalLabel = totalLabel,
-                        totalAmount = toThousand(transactions.sumOf { it.amount }),
-                        items = transactions.map { it.toListItem(isPositive = isIncome) },
-                    )
-                })
+    // День меняется → пересобираем поток на диапазон [день; следующий день). Загрузка с сети
+    // при этом не трогается (тянем всю историю), фильтруется только локальная выборка.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeTransactionsForSelectedDay(isIncome: Boolean) =
+        selectedDay.flatMapLatest { day ->
+            transactionRepository.observeTransactions(
+                isIncome = isIncome,
+                startDate = day.toString(),
+                endDate = day.plusDays(1).toString(),
+            )
+        }
+
+    // Сетевое обновление таба: пуш отложенных + подтягивание с сервера. Результат кладём в сигнал.
+    private fun refresh(tab: MainTab) {
+        viewModelScope.launch {
+            val result = when (tab) {
+                MainTab.EXPENSES, MainTab.INCOMES -> transactionRepository.refresh()
+                MainTab.ACCOUNTS -> accountRepository.refresh()
             }
-            .onFailure { setTab(tab, TabContent.Error(it.toUserMessage())) }
+            signals.getValue(tab).update {
+                it.copy(refreshed = true, error = result.exceptionOrNull()?.toUserMessage())
+            }
+        }
     }
 
-    private suspend fun loadAccounts() {
-        accountRepository.getAccounts()
-            .onSuccess { accounts ->
-                loadedAccounts = accounts
-                setTab(MainTab.ACCOUNTS, if (accounts.isEmpty()) {
-                    TabContent.Empty("Нет счетов")
-                } else {
-                    TabContent.Content(
-                        totalLabel = "баланс всего",
-                        totalAmount = toThousand(accounts.sumOf { it.balance }),
-                        items = accounts.map { it.toListItem() },
-                    )
-                })
-            }
-            .onFailure { setTab(MainTab.ACCOUNTS, TabContent.Error(it.toUserMessage())) }
+    private fun transactionsContent(
+        transactions: List<Transaction>,
+        isIncome: Boolean,
+        totalLabel: String,
+        emptyText: String,
+        signal: TabSignal,
+    ): TabContent = when {
+        transactions.isNotEmpty() -> TabContent.Content(
+            totalLabel = totalLabel,
+            totalAmount = toThousand(transactions.sumOf { it.amount }),
+            items = transactions.map { it.toListItem(isPositive = isIncome) },
+        )
+
+        signal.error != null -> TabContent.Error(signal.error)
+        signal.refreshed -> TabContent.Empty(emptyText)
+        else -> TabContent.Loading
+    }
+
+    private fun accountsContent(accounts: List<Account>, signal: TabSignal): TabContent = when {
+        accounts.isNotEmpty() -> TabContent.Content(
+            totalLabel = "баланс всего",
+            totalAmount = toThousand(accounts.sumOf { it.balance }),
+            items = accounts.map { it.toListItem() },
+        )
+
+        signal.error != null -> TabContent.Error(signal.error)
+        signal.refreshed -> TabContent.Empty("Нет счетов")
+        else -> TabContent.Loading
     }
 
     private fun Transaction.toListItem(isPositive: Boolean) = ListItemModel(
@@ -230,18 +293,13 @@ class MainViewModel(
 
             result
                 .onSuccess {
+                    // Локальная запись уже в Room → Flow таба переэмитит сам, ручной reload не нужен.
                     closeAddSheet()
-                    refreshAllTabs()
                 }
                 .onFailure {
                     _addState.update { it.copy(submitting = false) }
                 }
         }
-    }
-
-    private fun refreshAllTabs() {
-        _uiState.update { it.copy(tabs = MainTab.entries.associateWith { TabContent.NotLoaded }) }
-        loadTab(_uiState.value.selectedTab)
     }
 
     fun openAddAccountSheet() = _addAccountState.update { AddAccountUiState(visible = true) }
@@ -300,8 +358,8 @@ class MainViewModel(
 
             result
                 .onSuccess {
+                    // Счёт записан локально → Flow счетов обновит экран сам.
                     closeAddAccountSheet()
-                    loadTab(MainTab.ACCOUNTS)
                 }
                 .onFailure {
                     _addAccountState.update { it.copy(submitting = false) }
