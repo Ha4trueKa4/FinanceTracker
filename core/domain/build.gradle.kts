@@ -4,6 +4,11 @@ plugins {
 
 android {
     namespace = "com.example.fianancetracker.core.domain"
+
+    lint {
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
+    }
     compileSdk = 37
 
     defaultConfig {

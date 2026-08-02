@@ -12,6 +12,11 @@ val secrets = Properties().apply {
 
 android {
     namespace = "com.example.fianancetracker.core.data"
+
+    lint {
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
+    }
     compileSdk = 37
 
     defaultConfig {
