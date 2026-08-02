@@ -110,26 +110,27 @@ class AddTransactionViewModel(
             return
         }
 
-        val draft = TransactionDraft(
-            accountId = current.selectedAccountId!!.toLong(),
-            categoryId = current.selectedCategoryId!!,
-            amount = (current.amountDigits.toLongOrNull() ?: 0L).toDouble(),
-            transactionDate = toIsoInstant(current.date, current.time),
-            comment = current.comment.trim(),
-        )
-
+        val draft = buildDraft(current)
         _state.update { it.copy(submitting = true) }
         viewModelScope.launch {
-            val result = current.editingId?.let { id ->
-                transactionRepository.updateTransaction(id, draft)
-            } ?: transactionRepository.createTransaction(draft)
-
-            result
+            submit(current.editingId, draft)
                 // Локальная запись уже в Room → Flow списка переэмитит сам, ручной reload не нужен.
                 .onSuccess { close() }
                 .onFailure { _state.update { it.copy(submitting = false) } }
         }
     }
+
+    private fun buildDraft(state: AddTransactionUiState) = TransactionDraft(
+        accountId = state.selectedAccountId!!.toLong(),
+        categoryId = state.selectedCategoryId!!,
+        amount = (state.amountDigits.toLongOrNull() ?: 0L).toDouble(),
+        transactionDate = toIsoInstant(state.date, state.time),
+        comment = state.comment.trim(),
+    )
+
+    private suspend fun submit(editingId: String?, draft: TransactionDraft): Result<Unit> =
+        if (editingId != null) transactionRepository.updateTransaction(editingId, draft)
+        else transactionRepository.createTransaction(draft)
 
     private fun toIsoInstant(date: LocalDate, time: LocalTime): String =
         isoUtcMillisFormatter.format(

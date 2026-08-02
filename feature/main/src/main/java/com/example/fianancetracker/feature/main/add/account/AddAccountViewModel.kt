@@ -69,20 +69,20 @@ class AddAccountViewModel(
             return
         }
 
-        val name = current.name.trim()
-        val emoji = current.emoji
-        val balance = (current.amountDigits.toLongOrNull() ?: 0L).toDouble()
-
         _state.update { it.copy(submitting = true) }
         viewModelScope.launch {
-            val result = current.editingId?.let { id ->
-                accountRepository.updateAccount(id, name, emoji, balance, current.currency)
-            } ?: accountRepository.createAccount(name, emoji, balance, current.currency)
-
-            result
+            submit(current)
                 // Счёт записан локально → Flow счетов обновит экран сам.
                 .onSuccess { close() }
                 .onFailure { _state.update { it.copy(submitting = false) } }
         }
+    }
+
+    private suspend fun submit(state: AddAccountUiState): Result<Account> {
+        val name = state.name.trim()
+        val balance = (state.amountDigits.toLongOrNull() ?: 0L).toDouble()
+        return state.editingId?.let { id ->
+            accountRepository.updateAccount(id, name, state.emoji, balance, state.currency)
+        } ?: accountRepository.createAccount(name, state.emoji, balance, state.currency)
     }
 }

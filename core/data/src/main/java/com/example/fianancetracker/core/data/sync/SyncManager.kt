@@ -14,6 +14,7 @@ import com.example.fianancetracker.core.data.db.mapper.toEntity
 import com.example.fianancetracker.core.data.network.dto.AccountDto
 import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
 import com.example.fianancetracker.core.data.network.dto.TransactionRequestDto
+import com.example.fianancetracker.core.data.network.dto.TransactionResponseDto
 import com.example.fianancetracker.core.domain.common.AppError
 import com.google.gson.Gson
 import kotlinx.coroutines.sync.Mutex
@@ -148,34 +149,34 @@ class SyncManager(
         val accounts = accountRemote.getAccounts()
         upsertServerAccounts(accounts)
 
-        val categories = mutableMapOf<Long, CategoryEntity>()
-        val serverIds = mutableListOf<Long>()
-        for (account in accounts) {
-            // Без явного периода сервер отдаёт только транзакции за сегодня, и тогда
-            // deleteSyncedNotIn ниже вычистит всю остальную историю. Тянем весь диапазон.
-            val transactions =
-                transactionRemote.getByAccountAndPeriod(account.id, PULL_START_DATE, PULL_END_DATE)
-            for (tx in transactions) {
-                serverIds += tx.id
-                categories[tx.category.id] = CategoryEntity(
-                    id = tx.category.id,
-                    name = tx.category.name,
-                    emoji = tx.category.emoji,
-                    isIncome = tx.category.isIncome,
-                )
-                val existing = transactionLocal.getByServerId(tx.id)
-                if (existing == null) {
-                    transactionLocal.insert(tx.toEntity())
-                } else {
-                    transactionLocal.update(tx.toEntity(localId = existing.localId))
-                }
-            }
-        }
+        val remote = accounts.flatMap { fetchAccountTransactions(it.id) }
+        remote.forEach { upsertTransaction(it) }
+        syncCategoriesFrom(remote)
+        pruneSyncedTransactions(remote.map { it.id })
+        Unit
+    }
 
+    // Без явного периода сервер отдаёт только транзакции за сегодня, и тогда deleteSyncedNotIn
+    // вычистил бы всю остальную историю — поэтому тянем весь диапазон.
+    private suspend fun fetchAccountTransactions(accountId: Long): List<TransactionResponseDto> =
+        transactionRemote.getByAccountAndPeriod(accountId, PULL_START_DATE, PULL_END_DATE)
+
+    private suspend fun upsertTransaction(tx: TransactionResponseDto) {
+        val existing = transactionLocal.getByServerId(tx.id)
+        if (existing == null) transactionLocal.insert(tx.toEntity())
+        else transactionLocal.update(tx.toEntity(localId = existing.localId))
+    }
+
+    private suspend fun syncCategoriesFrom(remote: List<TransactionResponseDto>) {
+        val categories = remote
+            .map { it.category }
+            .associate { it.id to CategoryEntity(it.id, it.name, it.emoji, it.isIncome) }
         if (categories.isNotEmpty()) categoryLocal.upsertAll(categories.values.toList())
+    }
+
+    private suspend fun pruneSyncedTransactions(serverIds: List<Long>) {
         if (serverIds.isEmpty()) transactionLocal.deleteAllSynced()
         else transactionLocal.deleteSyncedNotIn(serverIds)
-        Unit
     }
 
     private companion object {
