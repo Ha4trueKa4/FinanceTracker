@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+val secretsFile = rootProject.file("local.properties")
+val secrets = Properties().apply {
+    if (secretsFile.exists()) load(secretsFile.inputStream())
+}
+val releaseStoreFile = secrets.getProperty("RELEASE_STORE_FILE")
 
 android {
     namespace = "com.example.fianancetracker"
@@ -22,9 +30,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = secrets.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = secrets.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = secrets.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            if (releaseStoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
