@@ -25,10 +25,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,23 +34,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.core.domain.settings.ThemeMode
 
-enum class ThemeOption(val title: String, val icon: ImageVector) {
-    LIGHT("Светлая", Icons.Filled.LightMode),
-    DARK("Тёмная", Icons.Filled.DarkMode),
-    SYSTEM("Системная", Icons.Filled.DesktopWindows),
+enum class ThemeOption(val title: String, val icon: ImageVector, val mode: ThemeMode) {
+    LIGHT("Светлая", Icons.Filled.LightMode, ThemeMode.LIGHT),
+    DARK("Тёмная", Icons.Filled.DarkMode, ThemeMode.DARK),
+    SYSTEM("Системная", Icons.Filled.DesktopWindows, ThemeMode.SYSTEM),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSheet(
     onDismiss: () -> Unit,
+    selected: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier,
-    selected: ThemeOption = ThemeOption.SYSTEM,
-    onSelect: (ThemeOption) -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var current by remember { mutableStateOf(selected) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -87,12 +83,9 @@ fun ThemeSheet(
                 ThemeOption.entries.forEach { option ->
                     ThemeCard(
                         option = option,
-                        selected = option == current,
+                        selected = option.mode == selected,
                         modifier = Modifier.weight(1f),
-                        onClick = {
-                            current = option
-                            onSelect(option)
-                        },
+                        onClick = { onSelect(option.mode) },
                     )
                 }
             }

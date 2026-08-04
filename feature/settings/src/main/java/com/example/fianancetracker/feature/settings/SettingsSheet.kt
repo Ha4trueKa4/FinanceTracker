@@ -30,6 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,8 +54,10 @@ fun SettingsSheet(
     onLanguageClick: () -> Unit = {},
     onPinClick: () -> Unit = {},
     onBiometricsClick: () -> Unit = {},
+    viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val themeMode by viewModel.themeMode.collectAsState()
     var showThemeSheet by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -92,7 +96,11 @@ fun SettingsSheet(
     }
 
     if (showThemeSheet) {
-        ThemeSheet(onDismiss = { showThemeSheet = false })
+        ThemeSheet(
+            onDismiss = { showThemeSheet = false },
+            selected = themeMode,
+            onSelect = viewModel::setThemeMode,
+        )
     }
 }
 
