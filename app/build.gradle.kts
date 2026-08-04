@@ -69,6 +69,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:main"))
     implementation(project(":feature:analytics"))
+    implementation(project(":feature:settings"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

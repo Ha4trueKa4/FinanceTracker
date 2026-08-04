@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +43,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun MainScreen(
     onNavigateToAnalytics: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
     addTransactionViewModel: AddTransactionViewModel = koinViewModel(),
@@ -58,7 +61,10 @@ fun MainScreen(
             FinanceTopBar(
                 dateText = state.dateLabel,
                 onCalendarClick = { showDatePicker = true },
-                onAction1Click = onNavigateToAnalytics
+                onAction1Click = onNavigateToAnalytics,
+                actionIcon2 = Icons.Filled.Settings,
+                actionContentDescription2 = "Настройки",
+                onAction2Click = onOpenSettings,
             )
         },
         bottomBar = {
