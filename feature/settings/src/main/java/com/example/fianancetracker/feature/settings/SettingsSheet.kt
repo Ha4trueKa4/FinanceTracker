@@ -17,12 +17,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +30,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,12 +49,12 @@ fun SettingsSheet(
     modifier: Modifier = Modifier,
     onCurrencyClick: () -> Unit = {},
     onCategoriesClick: () -> Unit = {},
-    onThemeClick: () -> Unit = {},
     onLanguageClick: () -> Unit = {},
     onPinClick: () -> Unit = {},
     onBiometricsClick: () -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showThemeSheet by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -72,10 +76,10 @@ fun SettingsSheet(
 
             SettingsSection(title = "Кошелёк") {
                 SettingRow(Icons.Filled.Payments, "Валюта", onCurrencyClick)
-                SettingRow(Icons.Filled.ReceiptLong, "Статьи", onCategoriesClick)
+                SettingRow(Icons.AutoMirrored.Filled.ReceiptLong, "Статьи", onCategoriesClick)
             }
             SettingsSection(title = "Интерфейс") {
-                SettingRow(Icons.Filled.DarkMode, "Тема оформления", onThemeClick)
+                SettingRow(Icons.Filled.DarkMode, "Тема оформления") { showThemeSheet = true }
                 SettingRow(Icons.Filled.Language, "Язык", onLanguageClick)
             }
             SettingsSection(title = "Безопасность") {
@@ -85,6 +89,10 @@ fun SettingsSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
         }
+    }
+
+    if (showThemeSheet) {
+        ThemeSheet(onDismiss = { showThemeSheet = false })
     }
 }
 
