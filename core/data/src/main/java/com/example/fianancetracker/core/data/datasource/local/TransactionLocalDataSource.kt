@@ -5,7 +5,7 @@ import com.example.fianancetracker.core.data.db.entity.TransactionEntity
 import kotlinx.coroutines.flow.Flow
 
 /** Локальный источник данных по транзакциям: обёртка над [TransactionDao] (Room). */
-interface TransactionLocalDataSource {
+internal interface TransactionLocalDataSource {
     fun observeByIncomeBetween(
         isIncome: Boolean,
         startDate: String,
@@ -22,7 +22,7 @@ interface TransactionLocalDataSource {
     suspend fun deleteAllSynced()
 }
 
-class TransactionLocalDataSourceImpl(private val dao: TransactionDao) : TransactionLocalDataSource {
+internal class TransactionLocalDataSourceImpl(private val dao: TransactionDao) : TransactionLocalDataSource {
     override fun observeByIncomeBetween(
         isIncome: Boolean,
         startDate: String,

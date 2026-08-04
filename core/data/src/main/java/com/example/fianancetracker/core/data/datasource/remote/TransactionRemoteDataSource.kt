@@ -7,7 +7,7 @@ import com.example.fianancetracker.core.data.network.dto.TransactionRequestDto
 import com.example.fianancetracker.core.data.network.dto.TransactionResponseDto
 
 /** Удалённый источник данных по транзакциям: тонкая обёртка над [FinanceApi]. */
-interface TransactionRemoteDataSource {
+internal interface TransactionRemoteDataSource {
     suspend fun getById(id: Long): TransactionResponseDto
     suspend fun getByAccountAndPeriod(
         accountId: Long,
@@ -18,7 +18,7 @@ interface TransactionRemoteDataSource {
     suspend fun update(id: Long, body: TransactionRequestDto): TransactionResponseDto
 }
 
-class TransactionRemoteDataSourceImpl(private val api: FinanceApi) : TransactionRemoteDataSource {
+internal class TransactionRemoteDataSourceImpl(private val api: FinanceApi) : TransactionRemoteDataSource {
     override suspend fun getById(id: Long): TransactionResponseDto =
         api.getTransactionById(id).bodyOrThrow()
 

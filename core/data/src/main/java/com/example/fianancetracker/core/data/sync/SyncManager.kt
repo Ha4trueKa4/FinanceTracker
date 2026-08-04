@@ -21,7 +21,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** Оркестратор синхронизации: пушит очередь офлайн-операций и подтягивает данные с сервера. */
-class SyncManager(
+internal class SyncManager(
     private val accountRemote: AccountRemoteDataSource,
     private val transactionRemote: TransactionRemoteDataSource,
     private val categoryRemote: CategoryRemoteDataSource,

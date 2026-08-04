@@ -5,7 +5,7 @@ import com.example.fianancetracker.core.data.db.entity.AccountEntity
 import kotlinx.coroutines.flow.Flow
 
 /** Локальный источник данных по счетам: обёртка над [AccountDao] (Room). */
-interface AccountLocalDataSource {
+internal interface AccountLocalDataSource {
     fun observeAll(): Flow<List<AccountEntity>>
     suspend fun getAll(): List<AccountEntity>
     suspend fun getById(id: Long): AccountEntity?
@@ -16,7 +16,7 @@ interface AccountLocalDataSource {
     suspend fun upsertAll(entities: List<AccountEntity>)
 }
 
-class AccountLocalDataSourceImpl(private val dao: AccountDao) : AccountLocalDataSource {
+internal class AccountLocalDataSourceImpl(private val dao: AccountDao) : AccountLocalDataSource {
     override fun observeAll(): Flow<List<AccountEntity>> = dao.observeAll()
     override suspend fun getAll(): List<AccountEntity> = dao.getAll()
     override suspend fun getById(id: Long): AccountEntity? = dao.getById(id)

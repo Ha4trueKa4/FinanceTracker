@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Репозиторий категорий: локальный кэш + подтягивание с сервера при пустом кэше. */
-class CategoryRepositoryImpl(
+internal class CategoryRepositoryImpl(
     private val local: CategoryLocalDataSource,
     private val syncManager: SyncManager,
 ) : CategoryRepository {

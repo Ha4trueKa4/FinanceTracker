@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 
-class SyncWorker(
+internal class SyncWorker(
     context: Context,
     params: WorkerParameters,
     private val syncManager: SyncManager,

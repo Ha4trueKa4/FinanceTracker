@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /** Репозиторий счетов: offline-first поверх локального источника + отложенная синхронизация. */
-class AccountRepositoryImpl(
+internal class AccountRepositoryImpl(
     private val local: AccountLocalDataSource,
     private val syncManager: SyncManager,
     private val pendingSync: PendingSyncLocalDataSource,

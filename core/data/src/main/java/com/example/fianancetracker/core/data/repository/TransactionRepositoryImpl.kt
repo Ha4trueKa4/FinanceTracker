@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /** Репозиторий транзакций: offline-first, локальный источник + очередь + удалённые детали. */
-class TransactionRepositoryImpl(
+internal class TransactionRepositoryImpl(
     private val remote: TransactionRemoteDataSource,
     private val local: TransactionLocalDataSource,
     private val accountLocal: AccountLocalDataSource,

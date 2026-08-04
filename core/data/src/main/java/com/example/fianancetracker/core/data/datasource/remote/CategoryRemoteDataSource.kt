@@ -5,10 +5,10 @@ import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.network.dto.CategoryDto
 
 /** Удалённый источник данных по категориям: тонкая обёртка над [FinanceApi]. */
-interface CategoryRemoteDataSource {
+internal interface CategoryRemoteDataSource {
     suspend fun getCategories(): List<CategoryDto>
 }
 
-class CategoryRemoteDataSourceImpl(private val api: FinanceApi) : CategoryRemoteDataSource {
+internal class CategoryRemoteDataSourceImpl(private val api: FinanceApi) : CategoryRemoteDataSource {
     override suspend fun getCategories(): List<CategoryDto> = api.getCategories().bodyOrThrow()
 }

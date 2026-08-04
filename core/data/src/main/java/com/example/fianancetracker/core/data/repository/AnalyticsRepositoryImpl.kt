@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Репозиторий аналитики: синхронизирует и агрегирует локальные данные для экрана аналитики. */
-class AnalyticsRepositoryImpl(
+internal class AnalyticsRepositoryImpl(
     private val accountLocal: AccountLocalDataSource,
     private val categoryLocal: CategoryLocalDataSource,
     private val transactionLocal: TransactionLocalDataSource,

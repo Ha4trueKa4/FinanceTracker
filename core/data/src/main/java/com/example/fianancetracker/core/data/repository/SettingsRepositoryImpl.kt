@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 
 /** Персист пользовательских настроек в Preferences DataStore. */
-class SettingsRepositoryImpl(private val context: Context) : SettingsRepository {
+internal class SettingsRepositoryImpl(private val context: Context) : SettingsRepository {
 
     private val themeKey = stringPreferencesKey("theme_mode")
     private val languageKey = stringPreferencesKey("app_language")
