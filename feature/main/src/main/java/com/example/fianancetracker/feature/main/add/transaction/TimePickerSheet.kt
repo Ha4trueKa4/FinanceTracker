@@ -24,9 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.feature.main.R
 import com.example.fianancetracker.feature.main.add.common.*
 import java.time.LocalTime
 
@@ -87,7 +89,7 @@ fun TimePickerSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Выберите время",
+                text = stringResource(R.string.time_picker_title),
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 letterSpacing = 0.5.sp,
@@ -106,7 +108,7 @@ fun TimePickerSheet(
             ) {
                 TimeField(
                     value = hour,
-                    label = "Часы",
+                    label = stringResource(R.string.time_hours),
                     isActive = active == TimeSelection.HOUR,
                     onClick = { active = TimeSelection.HOUR; partial = 0 },
                     modifier = Modifier.weight(1f),
@@ -121,7 +123,7 @@ fun TimePickerSheet(
                 }
                 TimeField(
                     value = minute,
-                    label = "Минуты",
+                    label = stringResource(R.string.time_minutes),
                     isActive = active == TimeSelection.MINUTE,
                     onClick = { active = TimeSelection.MINUTE; partial = 0 },
                     modifier = Modifier.weight(1f),
@@ -138,11 +140,11 @@ fun TimePickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("Отменить", color = TimeActiveBorder, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.action_cancel), color = TimeActiveBorder, fontWeight = FontWeight.Medium)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = { onConfirm(LocalTime.of(hour, minute)) }) {
-                    Text("Применить", color = TimeActiveBorder, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.action_apply), color = TimeActiveBorder, fontWeight = FontWeight.Medium)
                 }
             }
 

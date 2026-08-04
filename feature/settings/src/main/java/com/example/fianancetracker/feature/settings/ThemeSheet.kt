@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,15 +32,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fianancetracker.core.domain.settings.ThemeMode
 
-enum class ThemeOption(val title: String, val icon: ImageVector, val mode: ThemeMode) {
-    LIGHT("Светлая", Icons.Filled.LightMode, ThemeMode.LIGHT),
-    DARK("Тёмная", Icons.Filled.DarkMode, ThemeMode.DARK),
-    SYSTEM("Системная", Icons.Filled.DesktopWindows, ThemeMode.SYSTEM),
+enum class ThemeOption(@StringRes val titleRes: Int, val icon: ImageVector, val mode: ThemeMode) {
+    LIGHT(R.string.theme_light, Icons.Filled.LightMode, ThemeMode.LIGHT),
+    DARK(R.string.theme_dark, Icons.Filled.DarkMode, ThemeMode.DARK),
+    SYSTEM(R.string.theme_system, Icons.Filled.DesktopWindows, ThemeMode.SYSTEM),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +69,7 @@ fun ThemeSheet(
                 .padding(bottom = 34.dp),
         ) {
             Text(
-                text = "Тема оформления",
+                text = stringResource(R.string.settings_theme),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -131,7 +133,7 @@ private fun ThemeCard(
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                text = option.title,
+                text = stringResource(option.titleRes),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                 ),

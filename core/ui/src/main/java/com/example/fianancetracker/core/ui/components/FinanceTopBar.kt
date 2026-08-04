@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.R
@@ -33,10 +34,10 @@ fun FinanceTopBar(
     dateText: String,
     onCalendarClick: () -> Unit = {},
     actionIcon1: ImageVector = ImageVector.vectorResource(R.drawable.analytics),
-    actionContentDescription1: String = "Аналитика",
+    actionContentDescription1: String = stringResource(R.string.cd_analytics),
     onAction1Click: () -> Unit = {},
     actionIcon2: ImageVector = Icons.Filled.Tune,
-    actionContentDescription2: String = "Фильтр",
+    actionContentDescription2: String = stringResource(R.string.cd_filter),
     onAction2Click: () -> Unit = {},
 ) {
     Surface(color = MaterialTheme.colorScheme.surface) {
@@ -53,7 +54,7 @@ fun FinanceTopBar(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.CalendarMonth,
-                            contentDescription = "Календарь",
+                            contentDescription = stringResource(R.string.cd_calendar),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )

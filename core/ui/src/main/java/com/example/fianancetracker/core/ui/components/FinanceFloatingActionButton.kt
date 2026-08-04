@@ -8,7 +8,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.fianancetracker.core.ui.R
 
 @Composable
 fun FinanceFloatingActionButton(
@@ -23,7 +25,7 @@ fun FinanceFloatingActionButton(
     ) {
         Icon(
             imageVector = Icons.Filled.Add,
-            contentDescription = "Добавить",
+            contentDescription = stringResource(R.string.cd_add),
             modifier = Modifier.size(24.dp)
         )
     }

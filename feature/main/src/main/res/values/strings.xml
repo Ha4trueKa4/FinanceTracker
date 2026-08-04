@@ -1,0 +1,32 @@
+<resources>
+    <string name="tab_expenses">Расходы</string>
+    <string name="tab_incomes">Доходы</string>
+    <string name="tab_accounts">Счета</string>
+    <string name="total_expenses">расходы всего</string>
+    <string name="total_incomes">доходы всего</string>
+    <string name="total_balance">баланс всего</string>
+    <string name="empty_expenses">Нет расходов</string>
+    <string name="empty_incomes">Нет доходов</string>
+    <string name="empty_accounts">Нет счетов</string>
+    <string name="cd_settings">Настройки</string>
+    <string name="offline_banner">Нет подключения к интернету — показаны сохранённые данные</string>
+    <string name="time_picker_title">Выберите время</string>
+    <string name="time_hours">Часы</string>
+    <string name="time_minutes">Минуты</string>
+    <string name="action_apply">Применить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="cd_done">Готово</string>
+    <string name="cd_delete">Удалить</string>
+    <string name="label_comment">Комментарий</string>
+    <string name="label_account">Счёт</string>
+    <string name="label_category">Статья</string>
+    <string name="label_currency">Валюта</string>
+    <string name="label_name">Название</string>
+    <string name="label_date">Дата</string>
+    <string name="label_time">Время</string>
+    <string name="not_selected">Не выбрано</string>
+    <string name="account_icon">Иконка счёта</string>
+    <string name="currency_rub">Российский рубль</string>
+    <string name="currency_usd">Доллар США</string>
+    <string name="currency_eur">Евро</string>
+</resources>

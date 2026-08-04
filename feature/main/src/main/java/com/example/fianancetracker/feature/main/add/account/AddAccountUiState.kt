@@ -18,7 +18,7 @@ data class AddAccountUiState(
             amountText = "${amountDigits.ifEmpty { "0" }} ₽",
             name = name,
             emoji = emoji,
-            currency = Currency.entries.firstOrNull { it.code == currency }?.title ?: currency,
+            currency = currency,
             nameError = showErrors && name.isBlank(),
             amountError = false,
         )

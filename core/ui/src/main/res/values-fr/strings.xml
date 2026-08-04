@@ -1,0 +1,17 @@
+<resources>
+    <string name="error_no_internet">Pas de connexion Internet</string>
+    <string name="error_server">Erreur du serveur (%1$d)</string>
+    <string name="error_unknown">Erreur inconnue</string>
+    <string name="error_generic_title">Une erreur s\'est produite</string>
+    <string name="action_retry">Réessayer</string>
+    <string name="empty_no_data">Aucune donnée</string>
+    <string name="empty_no_operations">Aucune opération</string>
+    <string name="cd_analytics">Analyses</string>
+    <string name="cd_filter">Filtre</string>
+    <string name="cd_calendar">Calendrier</string>
+    <string name="cd_add">Ajouter</string>
+    <string name="account_type_debit">Débit</string>
+    <string name="account_type_credit">Crédit</string>
+    <string name="account_type_savings">Épargne</string>
+    <string name="account_type_cash">Espèces</string>
+</resources>

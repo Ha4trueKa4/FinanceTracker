@@ -1,5 +1,6 @@
 package com.example.fianancetracker.feature.analytics
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fianancetracker.core.domain.account.Account
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 /** ViewModel экрана аналитики: хранит фильтр и сырые данные, пересобирает состояние через [AnalyticsMapper]. */
 class AnalyticsViewModel(
     private val analyticsRepository: AnalyticsRepository,
+    private val context: Context,
     private val mapper: AnalyticsMapper = AnalyticsMapper(),
 ) : ViewModel() {
 
@@ -51,7 +53,7 @@ class AnalyticsViewModel(
                     categories = data.categories
                     recompute()
                 }
-                .onFailure { _state.value = AnalyticsUiState.Error(it.toUserMessage()) }
+                .onFailure { _state.value = AnalyticsUiState.Error(it.toUserMessage(context)) }
         }
     }
 

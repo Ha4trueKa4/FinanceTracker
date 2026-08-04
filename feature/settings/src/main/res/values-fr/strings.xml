@@ -1,0 +1,16 @@
+<resources>
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_section_wallet">Portefeuille</string>
+    <string name="settings_currency">Devise</string>
+    <string name="settings_articles">Catégories</string>
+    <string name="settings_section_interface">Interface</string>
+    <string name="settings_theme">Thème d\'apparence</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_section_security">Sécurité</string>
+    <string name="settings_pin">Code PIN</string>
+    <string name="settings_biometrics">Biométrie</string>
+
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+    <string name="theme_system">Système</string>
+</resources>

@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,14 +52,15 @@ fun SettingsSheet(
     modifier: Modifier = Modifier,
     onCurrencyClick: () -> Unit = {},
     onCategoriesClick: () -> Unit = {},
-    onLanguageClick: () -> Unit = {},
     onPinClick: () -> Unit = {},
     onBiometricsClick: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val themeMode by viewModel.themeMode.collectAsState()
+    val language by viewModel.language.collectAsState()
     var showThemeSheet by remember { mutableStateOf(false) }
+    var showLanguageSheet by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -69,7 +71,7 @@ fun SettingsSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
             Text(
-                text = "Настройки",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -78,17 +80,17 @@ fun SettingsSheet(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             )
 
-            SettingsSection(title = "Кошелёк") {
-                SettingRow(Icons.Filled.Payments, "Валюта", onCurrencyClick)
-                SettingRow(Icons.AutoMirrored.Filled.ReceiptLong, "Статьи", onCategoriesClick)
+            SettingsSection(title = stringResource(R.string.settings_section_wallet)) {
+                SettingRow(Icons.Filled.Payments, stringResource(R.string.settings_currency), onCurrencyClick)
+                SettingRow(Icons.AutoMirrored.Filled.ReceiptLong, stringResource(R.string.settings_articles), onCategoriesClick)
             }
-            SettingsSection(title = "Интерфейс") {
-                SettingRow(Icons.Filled.DarkMode, "Тема оформления") { showThemeSheet = true }
-                SettingRow(Icons.Filled.Language, "Язык", onLanguageClick)
+            SettingsSection(title = stringResource(R.string.settings_section_interface)) {
+                SettingRow(Icons.Filled.DarkMode, stringResource(R.string.settings_theme)) { showThemeSheet = true }
+                SettingRow(Icons.Filled.Language, stringResource(R.string.settings_language)) { showLanguageSheet = true }
             }
-            SettingsSection(title = "Безопасность") {
-                SettingRow(Icons.Filled.Lock, "ПИН-код", onPinClick)
-                SettingRow(Icons.Filled.Fingerprint, "Биометрия", onBiometricsClick)
+            SettingsSection(title = stringResource(R.string.settings_section_security)) {
+                SettingRow(Icons.Filled.Lock, stringResource(R.string.settings_pin), onPinClick)
+                SettingRow(Icons.Filled.Fingerprint, stringResource(R.string.settings_biometrics), onBiometricsClick)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -100,6 +102,14 @@ fun SettingsSheet(
             onDismiss = { showThemeSheet = false },
             selected = themeMode,
             onSelect = viewModel::setThemeMode,
+        )
+    }
+
+    if (showLanguageSheet) {
+        LanguageSheet(
+            onDismiss = { showLanguageSheet = false },
+            selected = language,
+            onSelect = viewModel::setLanguage,
         )
     }
 }

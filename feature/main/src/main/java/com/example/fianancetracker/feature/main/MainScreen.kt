@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.components.FinanceEmptyState
@@ -63,7 +64,7 @@ fun MainScreen(
                 onCalendarClick = { showDatePicker = true },
                 onAction1Click = onNavigateToAnalytics,
                 actionIcon2 = Icons.Filled.Settings,
-                actionContentDescription2 = "Настройки",
+                actionContentDescription2 = stringResource(R.string.cd_settings),
                 onAction2Click = onOpenSettings,
             )
         },
@@ -73,8 +74,8 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = state.selectedTab == tab,
                         onClick = { viewModel.selectTab(tab) },
-                        icon = { Icon(imageVector = tab.icon(), contentDescription = tab.title) },
-                        label = { Text(tab.title) }
+                        icon = { Icon(imageVector = tab.icon(), contentDescription = tab.title()) },
+                        label = { Text(tab.title()) }
                     )
                 }
             }
@@ -161,7 +162,7 @@ fun MainScreen(
 @Composable
 fun OfflineBanner(modifier: Modifier = Modifier) {
     Text(
-        text = "Нет подключения к интернету — показаны сохранённые данные",
+        text = stringResource(R.string.offline_banner),
         color = MaterialTheme.colorScheme.onErrorContainer,
         style = MaterialTheme.typography.bodySmall,
         textAlign = TextAlign.Center,

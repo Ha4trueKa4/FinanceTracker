@@ -12,9 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.feature.main.R
 import com.example.fianancetracker.feature.main.add.common.*
 
 @Composable
@@ -38,7 +40,7 @@ internal fun CommentField(
             Box(contentAlignment = Alignment.CenterStart) {
                 if (value.isEmpty()) {
                     Text(
-                        text = "Комментарий",
+                        text = stringResource(R.string.label_comment),
                         fontSize = 16.sp,
                         color = if (isError) ErrorColor else LineColor,
                     )

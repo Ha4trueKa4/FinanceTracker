@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,7 +82,7 @@ internal fun Key(key: String, modifier: Modifier = Modifier, onClick: () -> Unit
             if (key == KEY_BACKSPACE) {
                 Icon(
                     painter = painterResource(R.drawable.ic_backspace),
-                    contentDescription = "Удалить",
+                    contentDescription = stringResource(R.string.cd_delete),
                     tint = AmountColor,
                     modifier = Modifier.size(24.dp)
                 )

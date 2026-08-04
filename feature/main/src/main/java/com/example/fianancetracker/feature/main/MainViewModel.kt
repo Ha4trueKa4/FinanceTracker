@@ -1,5 +1,6 @@
 package com.example.fianancetracker.feature.main
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fianancetracker.core.domain.account.Account
@@ -24,6 +25,7 @@ import java.util.Locale
 class MainViewModel(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
+    private val context: Context,
 ) : ViewModel() {
 
     private val dateFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.forLanguageTag("ru"))
@@ -79,12 +81,24 @@ class MainViewModel(
             when (tab) {
                 MainTab.EXPENSES -> combine(
                     observeTransactionsForSelectedDay(isIncome = false), signal,
-                ) { list, s -> transactionsContent(list, isIncome = false, "расходы всего", "Нет расходов", s) }
+                ) { list, s ->
+                    transactionsContent(
+                        list, isIncome = false,
+                        context.getString(R.string.total_expenses),
+                        context.getString(R.string.empty_expenses), s,
+                    )
+                }
                     .collect { setTab(tab, it) }
 
                 MainTab.INCOMES -> combine(
                     observeTransactionsForSelectedDay(isIncome = true), signal,
-                ) { list, s -> transactionsContent(list, isIncome = true, "доходы всего", "Нет доходов", s) }
+                ) { list, s ->
+                    transactionsContent(
+                        list, isIncome = true,
+                        context.getString(R.string.total_incomes),
+                        context.getString(R.string.empty_incomes), s,
+                    )
+                }
                     .collect { setTab(tab, it) }
 
                 MainTab.ACCOUNTS -> combine(
@@ -112,7 +126,7 @@ class MainViewModel(
                 MainTab.ACCOUNTS -> accountRepository.refresh()
             }
             signals.getValue(tab).update {
-                it.copy(refreshed = true, error = result.exceptionOrNull()?.toUserMessage())
+                it.copy(refreshed = true, error = result.exceptionOrNull()?.toUserMessage(context))
             }
         }
     }
@@ -137,13 +151,13 @@ class MainViewModel(
 
     private fun accountsContent(accounts: List<Account>, signal: TabSignal): TabContent = when {
         accounts.isNotEmpty() -> TabContent.Content(
-            totalLabel = "баланс всего",
+            totalLabel = context.getString(R.string.total_balance),
             totalAmount = toThousand(accounts.sumOf { it.balance }),
-            items = accounts.map { it.toListItem() },
+            items = accounts.map { it.toListItem(context) },
         )
 
         signal.error != null -> TabContent.Error(signal.error)
-        signal.refreshed -> TabContent.Empty("Нет счетов")
+        signal.refreshed -> TabContent.Empty(context.getString(R.string.empty_accounts))
         else -> TabContent.Loading
     }
 }

@@ -1,0 +1,32 @@
+<resources>
+    <string name="tab_expenses">Gastos</string>
+    <string name="tab_incomes">Ingresos</string>
+    <string name="tab_accounts">Cuentas</string>
+    <string name="total_expenses">gastos totales</string>
+    <string name="total_incomes">ingresos totales</string>
+    <string name="total_balance">saldo total</string>
+    <string name="empty_expenses">Sin gastos</string>
+    <string name="empty_incomes">Sin ingresos</string>
+    <string name="empty_accounts">Sin cuentas</string>
+    <string name="cd_settings">Ajustes</string>
+    <string name="offline_banner">Sin conexión a Internet — mostrando datos guardados</string>
+    <string name="time_picker_title">Seleccionar hora</string>
+    <string name="time_hours">Horas</string>
+    <string name="time_minutes">Minutos</string>
+    <string name="action_apply">Aplicar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="cd_done">Listo</string>
+    <string name="cd_delete">Eliminar</string>
+    <string name="label_comment">Comentario</string>
+    <string name="label_account">Cuenta</string>
+    <string name="label_category">Categoría</string>
+    <string name="label_currency">Moneda</string>
+    <string name="label_name">Nombre</string>
+    <string name="label_date">Fecha</string>
+    <string name="label_time">Hora</string>
+    <string name="not_selected">No seleccionado</string>
+    <string name="account_icon">Icono de la cuenta</string>
+    <string name="currency_rub">Rublo ruso</string>
+    <string name="currency_usd">Dólar estadounidense</string>
+    <string name="currency_eur">Euro</string>
+</resources>
