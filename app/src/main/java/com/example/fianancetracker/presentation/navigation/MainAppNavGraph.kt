@@ -8,7 +8,6 @@ import androidx.navigation.compose.composable
 import com.example.fianancetracker.feature.analytics.AnalyticsScreen
 import com.example.fianancetracker.feature.analytics.AnalyticsViewModel
 import com.example.fianancetracker.feature.main.MainScreen
-import com.example.fianancetracker.presentation.screens.SplashScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -18,18 +17,9 @@ fun MainAppNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route,
+        startDestination = Screen.Main.route,
         modifier = modifier
     ) {
-        composable(Screen.Splash.route) {
-            SplashScreen(
-                onSplashFinished = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                }
-            )
-        }
         composable(Screen.Main.route) {
             MainScreen(
                 onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) }
