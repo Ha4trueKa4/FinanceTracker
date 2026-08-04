@@ -114,7 +114,7 @@ private fun ThemeCard(
             .clip(RoundedCornerShape(16.dp))
             .border(2.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(12.dp),
+            .padding(horizontal = 8.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -142,6 +142,7 @@ private fun ThemeCard(
                     fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
             )
         }
     }
