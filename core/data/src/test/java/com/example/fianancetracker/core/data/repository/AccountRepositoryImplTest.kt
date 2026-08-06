@@ -6,8 +6,11 @@ import com.example.fianancetracker.core.data.db.entity.AccountEntity
 import com.example.fianancetracker.core.data.db.entity.PendingSyncEntity
 import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.common.AppError
+import com.example.fianancetracker.core.domain.common.DispatcherProvider
 import com.google.gson.Gson
 import io.mockk.Runs
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
@@ -26,6 +29,12 @@ class AccountRepositoryImplTest {
     private lateinit var pendingSync: PendingSyncLocalDataSource
     private lateinit var repo: AccountRepositoryImpl
 
+    private val testDispatchers = object : DispatcherProvider {
+        private val dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
+        override val io: CoroutineDispatcher = dispatcher
+        override val default: CoroutineDispatcher = dispatcher
+    }
+
     private fun account(id: Long, name: String = "Основной") = AccountEntity(
         id = id,
         name = name,
@@ -41,7 +50,7 @@ class AccountRepositoryImplTest {
         local = mockk(relaxed = true)
         syncManager = mockk(relaxed = true)
         pendingSync = mockk(relaxed = true)
-        repo = AccountRepositoryImpl(local, syncManager, pendingSync, Gson())
+        repo = AccountRepositoryImpl(local, syncManager, pendingSync, Gson(), testDispatchers)
     }
 
     @Test

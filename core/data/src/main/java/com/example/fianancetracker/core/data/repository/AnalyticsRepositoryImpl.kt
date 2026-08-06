@@ -10,7 +10,7 @@ import com.example.fianancetracker.core.domain.analytics.AnalyticsData
 import com.example.fianancetracker.core.domain.expense.Expense
 import com.example.fianancetracker.core.domain.income.Income
 import com.example.fianancetracker.core.domain.repository.AnalyticsRepository
-import kotlinx.coroutines.Dispatchers
+import com.example.fianancetracker.core.domain.common.DispatcherProvider
 import kotlinx.coroutines.withContext
 
 /** Репозиторий аналитики: синхронизирует и агрегирует локальные данные для экрана аналитики. */
@@ -19,9 +19,10 @@ internal class AnalyticsRepositoryImpl(
     private val categoryLocal: CategoryLocalDataSource,
     private val transactionLocal: TransactionLocalDataSource,
     private val syncManager: SyncManager,
+    private val dispatchers: DispatcherProvider,
 ) : AnalyticsRepository {
 
-    override suspend fun getAnalyticsData(): Result<AnalyticsData> = withContext(Dispatchers.IO) {
+    override suspend fun getAnalyticsData(): Result<AnalyticsData> = withContext(dispatchers.io) {
         syncManager.pushPending()
         val pull = syncManager.pullTransactions()
 

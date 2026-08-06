@@ -10,9 +10,9 @@ import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
 import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.account.Account
 import com.example.fianancetracker.core.domain.common.AppError
+import com.example.fianancetracker.core.domain.common.DispatcherProvider
 import com.example.fianancetracker.core.domain.repository.AccountRepository
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -23,19 +23,20 @@ internal class AccountRepositoryImpl(
     private val syncManager: SyncManager,
     private val pendingSync: PendingSyncLocalDataSource,
     private val gson: Gson,
+    private val dispatchers: DispatcherProvider,
 ) : AccountRepository {
 
     override fun observeAccounts(): Flow<List<Account>> =
         local.observeAll().map { list -> list.map { it.toDomain() } }
 
-    override suspend fun refresh(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refresh(): Result<Unit> = withContext(dispatchers.io) {
         syncManager.pushPending().fold(
             onSuccess = { syncManager.pullAccounts() },
             onFailure = { Result.failure(it) },
         )
     }
 
-    override suspend fun getAccounts(): Result<List<Account>> = withContext(Dispatchers.IO) {
+    override suspend fun getAccounts(): Result<List<Account>> = withContext(dispatchers.io) {
         val pull = syncManager.pullAccounts()
         val cached = local.getAll().map { it.toDomain() }
         if (cached.isNotEmpty()) Result.success(cached) else pull.map { cached }
@@ -48,7 +49,7 @@ internal class AccountRepositoryImpl(
         emoji: String,
         balance: Double,
         currency: String,
-    ): Result<Account> = withContext(Dispatchers.IO) {
+    ): Result<Account> = withContext(dispatchers.io) {
         val tempId = (local.minId() ?: 0L).coerceAtMost(0L) - 1
         val entity = AccountEntity(
             id = tempId,
@@ -71,7 +72,7 @@ internal class AccountRepositoryImpl(
         emoji: String,
         balance: Double,
         currency: String,
-    ): Result<Account> = withContext(Dispatchers.IO) {
+    ): Result<Account> = withContext(dispatchers.io) {
         val localId = id.toLong()
         val existing = local.getById(localId)
             ?: return@withContext Result.failure(AppError.Unknown("Счёт не найден"))

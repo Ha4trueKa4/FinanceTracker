@@ -20,7 +20,7 @@ import com.example.fianancetracker.core.domain.transaction.Transaction
 import com.example.fianancetracker.core.domain.transaction.TransactionDetails
 import com.example.fianancetracker.core.domain.transaction.TransactionDraft
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
+import com.example.fianancetracker.core.domain.common.DispatcherProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -34,6 +34,7 @@ internal class TransactionRepositoryImpl(
     private val pendingSync: PendingSyncLocalDataSource,
     private val syncManager: SyncManager,
     private val gson: Gson,
+    private val dispatchers: DispatcherProvider,
 ) : TransactionRepository {
 
     override fun observeTransactions(
@@ -44,7 +45,7 @@ internal class TransactionRepositoryImpl(
         local.observeByIncomeBetween(isIncome, startDate, endDate)
             .map { list -> list.map { it.toTransaction() } }
 
-    override suspend fun refresh(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refresh(): Result<Unit> = withContext(dispatchers.io) {
         syncManager.pushPending().fold(
             onSuccess = { syncManager.pullTransactions() },
             onFailure = { Result.failure(it) },
@@ -52,7 +53,7 @@ internal class TransactionRepositoryImpl(
     }
 
     override suspend fun getTransactionDetails(id: String): Result<TransactionDetails> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             val cached = local.getByLocalId(id.toLong())
             if (cached != null) return@withContext Result.success(cached.toDetails())
 
@@ -60,7 +61,7 @@ internal class TransactionRepositoryImpl(
         }
 
     override suspend fun createTransaction(draft: TransactionDraft): Result<Unit> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             val account = accountLocal.getById(draft.accountId)
             val category = categoryLocal.getById(draft.categoryId)
 
@@ -79,7 +80,7 @@ internal class TransactionRepositoryImpl(
         }
 
     override suspend fun updateTransaction(id: String, draft: TransactionDraft): Result<Unit> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             val localId = id.toLong()
             val existing = local.getByLocalId(localId)
             val account = accountLocal.getById(draft.accountId)
