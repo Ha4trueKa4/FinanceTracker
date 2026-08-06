@@ -42,6 +42,7 @@ fun PinScreen(
     mode: PinMode,
     onSuccess: () -> Unit,
     modifier: Modifier = Modifier,
+    showHandle: Boolean = true,
     viewModel: PinViewModel = koinViewModel(parameters = { parametersOf(mode) }),
 ) {
     val state by viewModel.state.collectAsState()
@@ -54,6 +55,7 @@ fun PinScreen(
         state = state,
         onDigit = viewModel::onDigit,
         onBackspace = viewModel::onBackspace,
+        showHandle = showHandle,
         modifier = modifier,
     )
 }
@@ -63,6 +65,7 @@ private fun PinContent(
     state: PinUiState,
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
+    showHandle: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val subtitleRes = when (state.mode) {
@@ -78,19 +81,23 @@ private fun PinContent(
             .background(SheetBg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            contentAlignment = Alignment.TopCenter,
-        ) {
+        if (showHandle) {
             Box(
                 modifier = Modifier
-                    .size(width = 32.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(HandleColor),
-            )
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(HandleColor),
+                )
+            }
         }
+
+        Spacer(modifier = Modifier.height(if (showHandle) 0.dp else 24.dp))
 
         Text(
             text = stringResource(R.string.settings_pin),

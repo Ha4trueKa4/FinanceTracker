@@ -42,6 +42,7 @@ fun MainAppNavGraph(
             ) {
                 PinScreen(
                     mode = PinMode.VERIFY,
+                    showHandle = false,
                     onSuccess = {
                         navController.navigate(Screen.Main.route) {
                             popUpTo(Screen.Pin.route) { inclusive = true }
