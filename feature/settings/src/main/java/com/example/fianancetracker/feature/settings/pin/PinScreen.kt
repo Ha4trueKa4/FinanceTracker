@@ -2,7 +2,6 @@ package com.example.fianancetracker.feature.settings.pin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.core.ui.components.NumericKeyboard
 import com.example.fianancetracker.feature.settings.R
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -40,9 +36,6 @@ private val HandleColor = Color(0xFFCAC4D0)
 private val TitleColor = Color(0xFF1D1B20)
 private val SubtitleColor = Color(0xFF49454F)
 private val AccentColor = Color(0xFF6750A4)
-private val KeyboardBg = Color(0xFFE6E0E9)
-private val KeyText = Color(0xFF1C1B1F)
-private const val KEY_BACKSPACE = "⌫"
 
 @Composable
 fun PinScreen(
@@ -114,7 +107,7 @@ private fun PinContent(
         Text(
             text = stringResource(subtitleRes),
             fontSize = 16.sp,
-            color = if (state.error) AccentColor else SubtitleColor,
+            color = SubtitleColor,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -152,73 +145,6 @@ private fun PinContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Keypad(onDigit = onDigit, onBackspace = onBackspace)
-    }
-}
-
-@Composable
-private fun Keypad(
-    onDigit: (String) -> Unit,
-    onBackspace: () -> Unit,
-) {
-    val rows = listOf(
-        listOf("1", "2", "3"),
-        listOf("4", "5", "6"),
-        listOf("7", "8", "9"),
-        listOf("", "0", KEY_BACKSPACE),
-    )
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(KeyboardBg)
-            .padding(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        rows.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                row.forEach { key ->
-                    Box(modifier = Modifier.weight(1f)) {
-                        when (key) {
-                            "" -> Spacer(modifier = Modifier.fillMaxWidth().height(56.dp))
-                            KEY_BACKSPACE -> Key(onClick = onBackspace) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Backspace,
-                                    contentDescription = stringResource(R.string.cd_delete),
-                                    tint = KeyText,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-
-                            else -> Key(onClick = { onDigit(key) }) {
-                                Text(text = key, fontSize = 24.sp, color = KeyText)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Key(
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.White,
-        shadowElevation = 1.dp,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            content()
-        }
+        NumericKeyboard(onKeyClick = onDigit, onBackspace = onBackspace)
     }
 }

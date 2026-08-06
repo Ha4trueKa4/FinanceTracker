@@ -14,4 +14,5 @@
     <string name="account_type_credit">Crédito</string>
     <string name="account_type_savings">Ahorros</string>
     <string name="account_type_cash">Efectivo</string>
+    <string name="cd_delete">Eliminar</string>
 </resources>

@@ -14,4 +14,5 @@
     <string name="account_type_credit">Kreditkarte</string>
     <string name="account_type_savings">Sparkonto</string>
     <string name="account_type_cash">Bargeld</string>
+    <string name="cd_delete">Löschen</string>
 </resources>

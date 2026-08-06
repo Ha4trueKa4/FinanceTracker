@@ -64,5 +64,3 @@ internal val FabColor = Color(0xFF1C1B1F)
 internal val KeyboardBg = Color(0xFFE6E0E9)
 
 internal val KeyHeight = 56.dp
-
-const val KEY_BACKSPACE = "⌫"
