@@ -13,4 +13,12 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
     <string name="theme_system">Sistema</string>
+
+    <string name="pin_setup_title">Crea un PIN</string>
+    <string name="pin_confirm_title">Repite el PIN</string>
+    <string name="pin_verify_title">Introduce tu PIN</string>
+    <string name="pin_error_mismatch">Los PIN no coinciden</string>
+    <string name="pin_error_wrong">PIN incorrecto</string>
+    <string name="pin_disable">Desactivar PIN</string>
+    <string name="cd_delete">Eliminar</string>
 </resources>

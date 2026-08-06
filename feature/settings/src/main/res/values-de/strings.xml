@@ -13,4 +13,12 @@
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
     <string name="theme_system">System</string>
+
+    <string name="pin_setup_title">PIN erstellen</string>
+    <string name="pin_confirm_title">PIN wiederholen</string>
+    <string name="pin_verify_title">PIN eingeben</string>
+    <string name="pin_error_mismatch">PINs stimmen nicht überein</string>
+    <string name="pin_error_wrong">Falscher PIN</string>
+    <string name="pin_disable">PIN deaktivieren</string>
+    <string name="cd_delete">Löschen</string>
 </resources>

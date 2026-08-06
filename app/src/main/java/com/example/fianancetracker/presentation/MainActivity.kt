@@ -12,6 +12,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.example.fianancetracker.core.domain.repository.PinRepository
 import com.example.fianancetracker.core.domain.repository.SettingsRepository
 import com.example.fianancetracker.core.domain.settings.AppLanguage
 import com.example.fianancetracker.core.domain.settings.ThemeMode
@@ -23,6 +24,7 @@ import org.koin.android.ext.android.inject
 class MainActivity : AppCompatActivity() {
 
     private val settingsRepository: SettingsRepository by inject()
+    private val pinRepository: PinRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -38,7 +40,10 @@ class MainActivity : AppCompatActivity() {
                 .collectAsState(initial = ThemeMode.SYSTEM)
             FiananceTrackerTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
-                MainAppNavGraph(navController = navController)
+                MainAppNavGraph(
+                    navController = navController,
+                    startAtPin = pinRepository.isPinSet(),
+                )
             }
         }
     }

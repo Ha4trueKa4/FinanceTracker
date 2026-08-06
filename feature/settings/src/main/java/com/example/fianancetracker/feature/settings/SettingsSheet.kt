@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,11 +39,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.feature.settings.pin.PinMode
+import com.example.fianancetracker.feature.settings.pin.PinScreen
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,8 +63,10 @@ fun SettingsSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val themeMode by viewModel.themeMode.collectAsState()
     val language by viewModel.language.collectAsState()
+    val pinSet by viewModel.pinSet.collectAsState()
     var showThemeSheet by remember { mutableStateOf(false) }
     var showLanguageSheet by remember { mutableStateOf(false) }
+    var showPinSetup by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -89,7 +95,10 @@ fun SettingsSheet(
                 SettingRow(Icons.Filled.Language, stringResource(R.string.settings_language)) { showLanguageSheet = true }
             }
             SettingsSection(title = stringResource(R.string.settings_section_security)) {
-                SettingRow(Icons.Filled.Lock, stringResource(R.string.settings_pin), onPinClick)
+                SettingRow(Icons.Filled.Lock, stringResource(R.string.settings_pin)) { showPinSetup = true }
+                if (pinSet) {
+                    SettingRow(Icons.Filled.LockOpen, stringResource(R.string.pin_disable)) { viewModel.disablePin() }
+                }
                 SettingRow(Icons.Filled.Fingerprint, stringResource(R.string.settings_biometrics), onBiometricsClick)
             }
 
@@ -111,6 +120,34 @@ fun SettingsSheet(
             selected = language,
             onSelect = viewModel::setLanguage,
         )
+    }
+
+    if (showPinSetup) {
+        PinSetupSheet(
+            onDone = {
+                viewModel.refreshPinState()
+                showPinSetup = false
+            },
+            onDismiss = { showPinSetup = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PinSetupSheet(
+    onDone: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = null,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = Color.White,
+    ) {
+        PinScreen(mode = PinMode.SETUP, onSuccess = onDone)
     }
 }
 

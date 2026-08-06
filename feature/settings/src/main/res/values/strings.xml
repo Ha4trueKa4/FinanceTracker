@@ -13,4 +13,12 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_system">Системная</string>
+
+    <string name="pin_setup_title">Придумайте PIN-код</string>
+    <string name="pin_confirm_title">Повторите PIN-код</string>
+    <string name="pin_verify_title">Введите PIN-код</string>
+    <string name="pin_error_mismatch">PIN-коды не совпадают</string>
+    <string name="pin_error_wrong">Неверный PIN-код</string>
+    <string name="pin_disable">Отключить PIN-код</string>
+    <string name="cd_delete">Удалить</string>
 </resources>
