@@ -15,12 +15,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,8 +45,8 @@ fun AccountFilterRow(
         Surface(
             modifier = Modifier.size(32.dp),
             shape = CircleShape,
-            color = Color(0xFFFEF7FF),
-            border = BorderStroke(1.dp, Color(0xFFC4C7C5)),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(text = emoji, fontSize = 22.sp)
@@ -60,14 +60,14 @@ fun AccountFilterRow(
                 text = name,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
-                    color = Color(0xFF49454F),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -77,7 +77,7 @@ fun AccountFilterRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color(0xFF7B5EA7),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(checkSize),
             )
         } else {

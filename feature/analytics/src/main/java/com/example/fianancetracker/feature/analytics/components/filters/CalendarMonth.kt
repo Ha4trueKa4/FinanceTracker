@@ -13,12 +13,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,7 +71,7 @@ fun CalendarMonth(
                     text = day,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF49454F),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                 )
@@ -116,7 +116,7 @@ private fun MonthHeader(
     ) {
         if (showNavigation) {
             IconButton(onClick = onPreviousMonth) {
-                Icon(Icons.Default.KeyboardArrowLeft, "Предыдущий", tint = Color(0xFF49454F))
+                Icon(Icons.Default.KeyboardArrowLeft, "Предыдущий", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             Spacer(modifier = Modifier.size(24.dp))
@@ -125,11 +125,11 @@ private fun MonthHeader(
             text = "${russianMonthsFull[month - 1]} $year",
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF1D1B20),
+            color = MaterialTheme.colorScheme.onSurface,
         )
         if (showNavigation) {
             IconButton(onClick = onNextMonth) {
-                Icon(Icons.Default.KeyboardArrowRight, "Следующий", tint = Color(0xFF49454F))
+                Icon(Icons.Default.KeyboardArrowRight, "Следующий", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             Spacer(modifier = Modifier.size(24.dp))

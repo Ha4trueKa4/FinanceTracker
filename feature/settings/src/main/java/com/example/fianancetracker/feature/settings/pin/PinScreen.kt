@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,12 +30,6 @@ import com.example.fianancetracker.core.ui.components.NumericKeyboard
 import com.example.fianancetracker.feature.settings.R
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-private val SheetBg = Color(0xFFFFFFFF)
-private val HandleColor = Color(0xFFCAC4D0)
-private val TitleColor = Color(0xFF1D1B20)
-private val SubtitleColor = Color(0xFF49454F)
-private val AccentColor = Color(0xFF6750A4)
 
 @Composable
 fun PinScreen(
@@ -78,7 +72,7 @@ private fun PinContent(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .background(SheetBg),
+            .background(MaterialTheme.colorScheme.surface),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (showHandle) {
@@ -92,7 +86,7 @@ private fun PinContent(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(HandleColor),
+                        .background(MaterialTheme.colorScheme.outlineVariant),
                 )
             }
         }
@@ -103,7 +97,7 @@ private fun PinContent(
             text = stringResource(R.string.settings_pin),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = TitleColor,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
@@ -114,7 +108,7 @@ private fun PinContent(
         Text(
             text = stringResource(subtitleRes),
             fontSize = 16.sp,
-            color = SubtitleColor,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -127,8 +121,8 @@ private fun PinContent(
                         .size(16.dp)
                         .clip(CircleShape)
                         .then(
-                            if (filled) Modifier.background(AccentColor)
-                            else Modifier.border(2.dp, AccentColor, CircleShape),
+                            if (filled) Modifier.background(MaterialTheme.colorScheme.primary)
+                            else Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
                         ),
                 )
             }
@@ -146,7 +140,7 @@ private fun PinContent(
                 ""
             },
             fontSize = 14.sp,
-            color = AccentColor,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.height(18.dp),
         )
 

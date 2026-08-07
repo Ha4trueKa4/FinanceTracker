@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,9 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
-private val RangeColor = Color(0xFFE7E3F2)
-private val SelectedColor = Color(0xFF6750A4)
-
 /** Ячейка одного дня в календаре: подсветка диапазона и кружок для его границ. */
 @Composable
 internal fun CalendarDayCell(
@@ -33,18 +31,21 @@ internal fun CalendarDayCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val rangeColor = MaterialTheme.colorScheme.primaryContainer
+    val selectedColor = MaterialTheme.colorScheme.primary
+
     val isRangeStart = date == startDate
     val isRangeEnd = date == endDate
     val isInRange = startDate != null && endDate != null &&
         !date.isBefore(startDate) && !date.isAfter(endDate) && !isRangeStart && !isRangeEnd
 
     val rangeModifier = when {
-        isInRange -> Modifier.background(RangeColor)
+        isInRange -> Modifier.background(rangeColor)
         isRangeStart && endDate != null && !isRangeEnd -> Modifier.drawBehind {
-            drawRect(RangeColor, Offset(size.width / 2, 0f), Size(size.width / 2, size.height))
+            drawRect(rangeColor, Offset(size.width / 2, 0f), Size(size.width / 2, size.height))
         }
         isRangeEnd && startDate != null && !isRangeStart -> Modifier.drawBehind {
-            drawRect(RangeColor, Offset(0f, 0f), Size(size.width / 2, size.height))
+            drawRect(rangeColor, Offset(0f, 0f), Size(size.width / 2, size.height))
         }
         else -> Modifier
     }
@@ -61,13 +62,13 @@ internal fun CalendarDayCell(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(SelectedColor),
+                    .background(selectedColor),
                 contentAlignment = Alignment.Center,
             ) {
-                DayNumber(date.dayOfMonth, Color.White)
+                DayNumber(date.dayOfMonth, MaterialTheme.colorScheme.onPrimary)
             }
         } else {
-            DayNumber(date.dayOfMonth, Color(0xFF1D1B20))
+            DayNumber(date.dayOfMonth, MaterialTheme.colorScheme.onSurface)
         }
     }
 }

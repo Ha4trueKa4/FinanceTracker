@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,7 +56,7 @@ fun CategoryBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
@@ -74,7 +75,7 @@ fun CategoryBottomSheet(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF1D1B20).copy(alpha = 0.4f))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
 
@@ -82,7 +83,7 @@ fun CategoryBottomSheet(
                 text = "Статьи",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
             )
 
@@ -92,7 +93,7 @@ fun CategoryBottomSheet(
                 if (index != 0) {
                     HorizontalDivider(
                         thickness = 1.dp,
-                        color = Color(0xFFC4C7C5).copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 }
 
@@ -114,8 +115,8 @@ fun CategoryBottomSheet(
                     Surface(
                         modifier = Modifier.size(32.dp),
                         shape = CircleShape,
-                        color = Color(0xFFFEF7FF),
-                        border = BorderStroke(1.dp, Color(0xFFC4C7C5))
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
@@ -129,7 +130,7 @@ fun CategoryBottomSheet(
                         text = category.name,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF1D1B20),
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -138,14 +139,14 @@ fun CategoryBottomSheet(
                         Surface(
                             modifier = Modifier.size(24.dp),
                             shape = checkboxShape,
-                            color = Color(0xFF7B5EA7),
-                            border = BorderStroke(1.dp, Color(0xFF7B5EA7))
+                            color = MaterialTheme.colorScheme.primary,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }
@@ -155,7 +156,7 @@ fun CategoryBottomSheet(
                             modifier = Modifier.size(24.dp),
                             shape = checkboxShape,
                             color = Color.Transparent,
-                            border = BorderStroke(1.dp, Color(0xFFC4C7C5))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                         ) {}
                     }
                 }
@@ -169,7 +170,7 @@ fun CategoryBottomSheet(
                     .padding(horizontal = 20.dp)
                     .height(48.dp),
                 shape = RoundedCornerShape(100),
-                color = Color(0xFF6750A4)
+                color = MaterialTheme.colorScheme.primary
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -179,7 +180,7 @@ fun CategoryBottomSheet(
                         text = "Применить",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

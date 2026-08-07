@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +30,7 @@ fun DateField(
     Surface(
         modifier = modifier.height(36.dp),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, Color(0xFFC4C7C5)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         color = Color.Transparent,
     ) {
         Box(
@@ -40,7 +41,7 @@ fun DateField(
                 text = if (date != null) formatDateRussian(date) else placeholder,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }

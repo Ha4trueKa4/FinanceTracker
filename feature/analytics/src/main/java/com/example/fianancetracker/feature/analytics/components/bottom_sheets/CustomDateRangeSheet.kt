@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -61,7 +62,7 @@ fun CustomDateRangeSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
@@ -80,7 +81,7 @@ fun CustomDateRangeSheet(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF79747E).copy(alpha = 0.4f))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
 
@@ -88,7 +89,7 @@ fun CustomDateRangeSheet(
                 text = "Произвольный период",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
             )
 
@@ -108,7 +109,7 @@ fun CustomDateRangeSheet(
                     modifier = Modifier
                         .width(12.dp)
                         .height(1.dp)
-                        .background(Color(0xFFC4C7C5))
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 DateField(
                     date = endDate,
@@ -174,7 +175,7 @@ fun CustomDateRangeSheet(
                         text = "Отмена",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF6750A4),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                     )
                 }
@@ -182,13 +183,13 @@ fun CustomDateRangeSheet(
                 Surface(
                     modifier = Modifier.clickable { onApply(startDate, endDate) },
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF6750A4)
+                    color = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
                         text = "Применить",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
                     )
                 }

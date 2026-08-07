@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,7 +49,7 @@ fun AccountBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     ) {
         Column(
@@ -67,7 +67,7 @@ fun AccountBottomSheet(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF1D1B20).copy(alpha = 0.4f)),
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
                 )
             }
 
@@ -75,7 +75,7 @@ fun AccountBottomSheet(
                 text = "Счёт",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             )
 
@@ -88,7 +88,7 @@ fun AccountBottomSheet(
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color = Color(0xFFC4C7C5).copy(alpha = 0.4f),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
             )
 
             accounts.forEachIndexed { index, account ->
@@ -102,7 +102,7 @@ fun AccountBottomSheet(
                 if (index < accounts.lastIndex) {
                     HorizontalDivider(
                         thickness = 0.5.dp,
-                        color = Color(0xFFC4C7C5).copy(alpha = 0.4f),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                     )
                 }
             }
@@ -115,7 +115,7 @@ fun AccountBottomSheet(
                     .padding(horizontal = 16.dp)
                     .height(52.dp),
                 shape = RoundedCornerShape(100),
-                color = Color(0xFF6750A4),
+                color = MaterialTheme.colorScheme.primary,
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -125,7 +125,7 @@ fun AccountBottomSheet(
                         text = "Готово",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
