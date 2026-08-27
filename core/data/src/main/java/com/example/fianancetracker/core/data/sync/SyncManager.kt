@@ -1,29 +1,34 @@
 package com.example.fianancetracker.core.data.sync
 
 import com.example.fianancetracker.core.data.common.apiCall
-import com.example.fianancetracker.core.data.common.bodyOrThrow
-import com.example.fianancetracker.core.data.db.dao.AccountDao
-import com.example.fianancetracker.core.data.db.dao.CategoryDao
-import com.example.fianancetracker.core.data.db.dao.PendingSyncDao
-import com.example.fianancetracker.core.data.db.dao.TransactionDao
+import com.example.fianancetracker.core.data.datasource.local.AccountLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.CategoryLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.PendingSyncLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.TransactionLocalDataSource
+import com.example.fianancetracker.core.data.datasource.remote.AccountRemoteDataSource
+import com.example.fianancetracker.core.data.datasource.remote.CategoryRemoteDataSource
+import com.example.fianancetracker.core.data.datasource.remote.TransactionRemoteDataSource
 import com.example.fianancetracker.core.data.db.entity.CategoryEntity
 import com.example.fianancetracker.core.data.db.entity.PendingType
 import com.example.fianancetracker.core.data.db.mapper.toEntity
-import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.network.dto.AccountDto
 import com.example.fianancetracker.core.data.network.dto.AccountRequestDto
 import com.example.fianancetracker.core.data.network.dto.TransactionRequestDto
+import com.example.fianancetracker.core.data.network.dto.TransactionResponseDto
 import com.example.fianancetracker.core.domain.common.AppError
 import com.google.gson.Gson
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class SyncManager(
-    private val api: FinanceApi,
-    private val accountDao: AccountDao,
-    private val categoryDao: CategoryDao,
-    private val transactionDao: TransactionDao,
-    private val pendingSyncDao: PendingSyncDao,
+/** Оркестратор синхронизации: пушит очередь офлайн-операций и подтягивает данные с сервера. */
+internal class SyncManager(
+    private val accountRemote: AccountRemoteDataSource,
+    private val transactionRemote: TransactionRemoteDataSource,
+    private val categoryRemote: CategoryRemoteDataSource,
+    private val accountLocal: AccountLocalDataSource,
+    private val transactionLocal: TransactionLocalDataSource,
+    private val categoryLocal: CategoryLocalDataSource,
+    private val pendingSync: PendingSyncLocalDataSource,
     private val gson: Gson,
 ) {
 
@@ -43,17 +48,17 @@ class SyncManager(
     suspend fun pushPending(): Result<Unit> = syncMutex.withLock { doPushPending() }
 
     private suspend fun doPushPending(): Result<Unit> {
-        val ops = pendingSyncDao.getAll()
+        val ops = pendingSync.getAll()
         for (op in ops) {
             val result = runOp(op.type, op.targetId, op.payload)
             val error = result.exceptionOrNull()
             when {
                 // Успех — операция доехала, убираем из очереди.
-                result.isSuccess -> pendingSyncDao.deleteById(op.localId)
+                result.isSuccess -> pendingSync.deleteById(op.localId)
                 // Постоянная клиентская ошибка (4xx): операция невалидна, повтор не поможет —
                 // выкидываем, иначе она навсегда заблокирует очередь.
                 error is AppError.Server && error.code in 400..499 ->
-                    pendingSyncDao.deleteById(op.localId)
+                    pendingSync.deleteById(op.localId)
                 // Нет сети / 5xx / неизвестная ошибка — НЕ теряем операцию:
                 // оставляем в очереди и выходим, воркер повторит попытку позже.
                 else -> return Result.failure(error ?: AppError.Unknown(null))
@@ -66,20 +71,20 @@ class SyncManager(
         when (type) {
             PendingType.CREATE_TRANSACTION.name -> apiCall {
                 val dto = resolveTxAccount(targetId, payload)
-                val created = api.createTransaction(dto).bodyOrThrow()
-                transactionDao.markSynced(targetId, created.id)
+                val created = transactionRemote.create(dto)
+                transactionLocal.markSynced(targetId, created.id)
                 Unit
             }
 
             PendingType.UPDATE_TRANSACTION.name -> {
-                val serverId = transactionDao.getByLocalId(targetId)?.serverId
+                val serverId = transactionLocal.getByLocalId(targetId)?.serverId
                 if (serverId == null) {
                     Result.failure(AppError.NoInternet)
                 } else apiCall {
                     val dto = resolveTxAccount(targetId, payload)
-                    api.updateTransaction(serverId, dto).bodyOrThrow()
-                    transactionDao.getByLocalId(targetId)?.let {
-                        transactionDao.update(it.copy(synced = true))
+                    transactionRemote.update(serverId, dto)
+                    transactionLocal.getByLocalId(targetId)?.let {
+                        transactionLocal.update(it.copy(synced = true))
                     }
                     Unit
                 }
@@ -87,23 +92,23 @@ class SyncManager(
 
             PendingType.CREATE_ACCOUNT.name -> apiCall {
                 val dto = gson.fromJson(payload, AccountRequestDto::class.java)
-                val created = api.createAccount(dto).bodyOrThrow()
+                val created = accountRemote.createAccount(dto)
                 // Сверка: временный локальный id → серверный (счёт, ссылки транзакций, очередь).
-                accountDao.reassignId(oldId = targetId, newId = created.id)
-                transactionDao.reassignAccount(oldAccountId = targetId, newAccountId = created.id)
-                pendingSyncDao.retargetAccountOps(oldId = targetId, newId = created.id)
+                accountLocal.reassignId(oldId = targetId, newId = created.id)
+                transactionLocal.reassignAccount(oldAccountId = targetId, newAccountId = created.id)
+                pendingSync.retargetAccountOps(oldId = targetId, newId = created.id)
                 Unit
             }
 
             PendingType.UPDATE_ACCOUNT.name -> {
-                val serverId = accountDao.getById(targetId)?.serverId
+                val serverId = accountLocal.getById(targetId)?.serverId
                 if (serverId == null) {
                     // Счёт ещё не создан на сервере — оставляем операцию в очереди до следующего цикла.
                     Result.failure(AppError.Unknown("Счёт ещё не синхронизирован"))
                 } else apiCall {
                     val dto = gson.fromJson(payload, AccountRequestDto::class.java)
-                    api.updateAccount(serverId, dto).bodyOrThrow()
-                    accountDao.markSynced(targetId)
+                    accountRemote.updateAccount(serverId, dto)
+                    accountLocal.markSynced(targetId)
                     Unit
                 }
             }
@@ -115,65 +120,63 @@ class SyncManager(
     // id из сущности транзакции — после сверки счёта он уже указывает на серверный.
     private suspend fun resolveTxAccount(txLocalId: Long, payload: String): TransactionRequestDto {
         val dto = gson.fromJson(payload, TransactionRequestDto::class.java)
-        val accountId = transactionDao.getByLocalId(txLocalId)?.accountId ?: dto.accountId
+        val accountId = transactionLocal.getByLocalId(txLocalId)?.accountId ?: dto.accountId
         if (accountId <= 0) throw AppError.Unknown("Счёт транзакции ещё не синхронизирован")
         return dto.copy(accountId = accountId)
     }
 
     // Не затираем локальные несинхронизированные счета (оффлайн-создание/правку) данными сервера.
     private suspend fun upsertServerAccounts(remote: List<AccountDto>) {
-        val localById = accountDao.getAll().associateBy { it.id }
+        val localById = accountLocal.getAll().associateBy { it.id }
         val toUpsert = remote.mapNotNull { dto ->
             val local = localById[dto.id]
             if (local != null && !local.synced) null else dto.toEntity()
         }
-        if (toUpsert.isNotEmpty()) accountDao.upsertAll(toUpsert)
+        if (toUpsert.isNotEmpty()) accountLocal.upsertAll(toUpsert)
     }
 
     suspend fun pullAccounts(): Result<Unit> = apiCall {
-        upsertServerAccounts(api.getAccounts().bodyOrThrow())
+        upsertServerAccounts(accountRemote.getAccounts())
         Unit
     }
 
     suspend fun pullCategories(): Result<Unit> = apiCall {
-        val categories = api.getCategories().bodyOrThrow().map { it.toEntity() }
-        categoryDao.upsertAll(categories)
+        categoryLocal.upsertAll(categoryRemote.getCategories().map { it.toEntity() })
         Unit
     }
 
     suspend fun pullTransactions(): Result<Unit> = apiCall {
-        val accounts = api.getAccounts().bodyOrThrow()
+        val accounts = accountRemote.getAccounts()
         upsertServerAccounts(accounts)
 
-        val categories = mutableMapOf<Long, CategoryEntity>()
-        val serverIds = mutableListOf<Long>()
-        for (account in accounts) {
-            // Без явного периода сервер отдаёт только транзакции за сегодня, и тогда
-            // deleteSyncedNotIn ниже вычистит всю остальную историю. Тянем весь диапазон.
-            val transactions = api
-                .getTransactionsByAccountAndPeriod(account.id, PULL_START_DATE, PULL_END_DATE)
-                .body().orEmpty()
-            for (tx in transactions) {
-                serverIds += tx.id
-                categories[tx.category.id] = CategoryEntity(
-                    id = tx.category.id,
-                    name = tx.category.name,
-                    emoji = tx.category.emoji,
-                    isIncome = tx.category.isIncome,
-                )
-                val existing = transactionDao.getByServerId(tx.id)
-                if (existing == null) {
-                    transactionDao.insert(tx.toEntity())
-                } else {
-                    transactionDao.update(tx.toEntity(localId = existing.localId))
-                }
-            }
-        }
-
-        if (categories.isNotEmpty()) categoryDao.upsertAll(categories.values.toList())
-        if (serverIds.isEmpty()) transactionDao.deleteAllSynced()
-        else transactionDao.deleteSyncedNotIn(serverIds)
+        val remote = accounts.flatMap { fetchAccountTransactions(it.id) }
+        remote.forEach { upsertTransaction(it) }
+        syncCategoriesFrom(remote)
+        pruneSyncedTransactions(remote.map { it.id })
         Unit
+    }
+
+    // Без явного периода сервер отдаёт только транзакции за сегодня, и тогда deleteSyncedNotIn
+    // вычистил бы всю остальную историю — поэтому тянем весь диапазон.
+    private suspend fun fetchAccountTransactions(accountId: Long): List<TransactionResponseDto> =
+        transactionRemote.getByAccountAndPeriod(accountId, PULL_START_DATE, PULL_END_DATE)
+
+    private suspend fun upsertTransaction(tx: TransactionResponseDto) {
+        val existing = transactionLocal.getByServerId(tx.id)
+        if (existing == null) transactionLocal.insert(tx.toEntity())
+        else transactionLocal.update(tx.toEntity(localId = existing.localId))
+    }
+
+    private suspend fun syncCategoriesFrom(remote: List<TransactionResponseDto>) {
+        val categories = remote
+            .map { it.category }
+            .associate { it.id to CategoryEntity(it.id, it.name, it.emoji, it.isIncome) }
+        if (categories.isNotEmpty()) categoryLocal.upsertAll(categories.values.toList())
+    }
+
+    private suspend fun pruneSyncedTransactions(serverIds: List<Long>) {
+        if (serverIds.isEmpty()) transactionLocal.deleteAllSynced()
+        else transactionLocal.deleteSyncedNotIn(serverIds)
     }
 
     private companion object {

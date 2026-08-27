@@ -1,0 +1,24 @@
+<resources>
+    <string name="settings_title">Настройки</string>
+    <string name="settings_section_wallet">Кошелёк</string>
+    <string name="settings_currency">Валюта</string>
+    <string name="settings_articles">Статьи</string>
+    <string name="settings_section_interface">Интерфейс</string>
+    <string name="settings_theme">Тема оформления</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_section_security">Безопасность</string>
+    <string name="settings_pin">ПИН-код</string>
+    <string name="settings_biometrics">Биометрия</string>
+
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_system">Системная</string>
+
+    <string name="pin_setup_title">Придумайте PIN-код</string>
+    <string name="pin_confirm_title">Повторите PIN-код</string>
+    <string name="pin_verify_title">Введите PIN-код</string>
+    <string name="pin_error_mismatch">PIN-коды не совпадают</string>
+    <string name="pin_error_wrong">Неверный PIN-код</string>
+    <string name="pin_disable">Отключить PIN-код</string>
+    <string name="cd_delete">Удалить</string>
+</resources>

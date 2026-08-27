@@ -1,0 +1,24 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_wallet">Wallet</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_articles">Categories</string>
+    <string name="settings_section_interface">Interface</string>
+    <string name="settings_theme">Appearance theme</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_section_security">Security</string>
+    <string name="settings_pin">PIN code</string>
+    <string name="settings_biometrics">Biometrics</string>
+
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+
+    <string name="pin_setup_title">Create a PIN</string>
+    <string name="pin_confirm_title">Repeat the PIN</string>
+    <string name="pin_verify_title">Enter your PIN</string>
+    <string name="pin_error_mismatch">PINs do not match</string>
+    <string name="pin_error_wrong">Wrong PIN</string>
+    <string name="pin_disable">Disable PIN</string>
+    <string name="cd_delete">Delete</string>
+</resources>

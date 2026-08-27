@@ -1,0 +1,18 @@
+<resources>
+    <string name="error_no_internet">Нет подключения к интернету</string>
+    <string name="error_server">Ошибка сервера (%1$d)</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="error_generic_title">Что-то пошло не так</string>
+    <string name="action_retry">Повторить</string>
+    <string name="empty_no_data">Нет данных</string>
+    <string name="empty_no_operations">Нет операций</string>
+    <string name="cd_analytics">Аналитика</string>
+    <string name="cd_filter">Фильтр</string>
+    <string name="cd_calendar">Календарь</string>
+    <string name="cd_add">Добавить</string>
+    <string name="account_type_debit">Дебетовая</string>
+    <string name="account_type_credit">Кредитная</string>
+    <string name="account_type_savings">Накопительная</string>
+    <string name="account_type_cash">Наличные</string>
+    <string name="cd_delete">Удалить</string>
+</resources>

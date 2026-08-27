@@ -1,8 +1,8 @@
 package com.example.fianancetracker.core.domain.account
 
-enum class AccountType(val displayName: String) {
-    DEBIT("Дебетовая"),
-    CREDIT("Кредитная"),
-    SAVINGS("Накопительная"),
-    CASH("Наличные")
+enum class AccountType {
+    DEBIT,
+    CREDIT,
+    SAVINGS,
+    CASH,
 }

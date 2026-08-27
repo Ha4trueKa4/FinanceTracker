@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.components.FinanceEmptyState
@@ -30,8 +33,10 @@ import com.example.fianancetracker.core.ui.components.FinanceTopBar
 import com.example.fianancetracker.core.ui.components.FinanceTotalCard
 import com.example.fianancetracker.core.ui.utils.rememberIsOnline
 import com.example.fianancetracker.feature.main.add.account.AddAccountSheetHost
+import com.example.fianancetracker.feature.main.add.account.AddAccountViewModel
 import com.example.fianancetracker.feature.main.add.transaction.AddPicker
 import com.example.fianancetracker.feature.main.add.transaction.AddTransactionSheetHost
+import com.example.fianancetracker.feature.main.add.transaction.AddTransactionViewModel
 import com.example.fianancetracker.feature.main.add.transaction.DatePickerDialogM3
 import org.koin.androidx.compose.koinViewModel
 
@@ -39,12 +44,15 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun MainScreen(
     onNavigateToAnalytics: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
+    addTransactionViewModel: AddTransactionViewModel = koinViewModel(),
+    addAccountViewModel: AddAccountViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    val addState by viewModel.addState.collectAsState()
-    val addAccountState by viewModel.addAccountState.collectAsState()
+    val addState by addTransactionViewModel.state.collectAsState()
+    val addAccountState by addAccountViewModel.state.collectAsState()
     val isOnline = rememberIsOnline()
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -54,7 +62,10 @@ fun MainScreen(
             FinanceTopBar(
                 dateText = state.dateLabel,
                 onCalendarClick = { showDatePicker = true },
-                onAction1Click = onNavigateToAnalytics
+                onAction1Click = onNavigateToAnalytics,
+                actionIcon2 = Icons.Filled.Settings,
+                actionContentDescription2 = stringResource(R.string.cd_settings),
+                onAction2Click = onOpenSettings,
             )
         },
         bottomBar = {
@@ -63,16 +74,16 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = state.selectedTab == tab,
                         onClick = { viewModel.selectTab(tab) },
-                        icon = { Icon(imageVector = tab.icon(), contentDescription = tab.title) },
-                        label = { Text(tab.title) }
+                        icon = { Icon(imageVector = tab.icon(), contentDescription = tab.title()) },
+                        label = { Text(tab.title()) }
                     )
                 }
             }
         },
         floatingActionButton = {
             FinanceFloatingActionButton({
-                if (state.selectedTab == MainTab.ACCOUNTS) viewModel.openAddAccountSheet()
-                else viewModel.openAddSheet()
+                if (state.selectedTab == MainTab.ACCOUNTS) addAccountViewModel.open()
+                else addTransactionViewModel.open(isIncome = state.selectedTab == MainTab.INCOMES)
             })
         }
     ) { padding ->
@@ -92,8 +103,8 @@ fun MainScreen(
                         items = content.items,
                         modifier = Modifier.fillMaxSize().weight(1f),
                         onItemClick = { id ->
-                            if (isTransactionTab) viewModel.openEditSheet(id)
-                            else viewModel.openEditAccountSheet(id)
+                            if (isTransactionTab) addTransactionViewModel.openEdit(id)
+                            else addAccountViewModel.openEdit(id)
                         }
                     )
                 }
@@ -104,35 +115,35 @@ fun MainScreen(
     if (addState.visible) {
         AddTransactionSheetHost(
             state = addState,
-            onDismiss = viewModel::closeAddSheet,
-            onKeyClick = viewModel::onAddKey,
-            onBackspace = viewModel::onAddBackspace,
-            onConfirm = viewModel::confirmAdd,
-            onCommentChange = viewModel::onAddComment,
-            onCategoryClick = { viewModel.openAddPicker(AddPicker.CATEGORY) },
-            onDateClick = { viewModel.openAddPicker(AddPicker.DATE) },
-            onTimeClick = { viewModel.openAddPicker(AddPicker.TIME) },
-            onAccountClick = { viewModel.openAddPicker(AddPicker.ACCOUNT) },
-            onPickCategory = viewModel::selectCategory,
-            onPickAccount = viewModel::selectAccount,
-            onPickDate = viewModel::selectDate,
-            onPickTime = viewModel::selectTime,
-            onPickerDismiss = viewModel::dismissAddPicker,
+            onDismiss = addTransactionViewModel::close,
+            onKeyClick = addTransactionViewModel::onKey,
+            onBackspace = addTransactionViewModel::onBackspace,
+            onConfirm = addTransactionViewModel::confirm,
+            onCommentChange = addTransactionViewModel::onComment,
+            onCategoryClick = { addTransactionViewModel.openPicker(AddPicker.CATEGORY) },
+            onDateClick = { addTransactionViewModel.openPicker(AddPicker.DATE) },
+            onTimeClick = { addTransactionViewModel.openPicker(AddPicker.TIME) },
+            onAccountClick = { addTransactionViewModel.openPicker(AddPicker.ACCOUNT) },
+            onPickCategory = addTransactionViewModel::selectCategory,
+            onPickAccount = addTransactionViewModel::selectAccount,
+            onPickDate = addTransactionViewModel::selectDate,
+            onPickTime = addTransactionViewModel::selectTime,
+            onPickerDismiss = addTransactionViewModel::dismissPicker,
         )
     }
 
     if (addAccountState.visible) {
         AddAccountSheetHost(
             state = addAccountState,
-            onDismiss = viewModel::closeAddAccountSheet,
-            onKeyClick = viewModel::onAccountKey,
-            onBackspace = viewModel::onAccountBackspace,
-            onConfirm = viewModel::confirmAddAccount,
-            onNameChange = viewModel::onAccountName,
-            onEmojiSelect = viewModel::selectAccountEmoji,
-            onCurrencyClick = viewModel::openAccountCurrencyPicker,
-            onPickCurrency = viewModel::selectAccountCurrency,
-            onCurrencyPickerDismiss = viewModel::dismissAccountCurrencyPicker,
+            onDismiss = addAccountViewModel::close,
+            onKeyClick = addAccountViewModel::onKey,
+            onBackspace = addAccountViewModel::onBackspace,
+            onConfirm = addAccountViewModel::confirm,
+            onNameChange = addAccountViewModel::onName,
+            onEmojiSelect = addAccountViewModel::selectEmoji,
+            onCurrencyClick = addAccountViewModel::openCurrencyPicker,
+            onPickCurrency = addAccountViewModel::selectCurrency,
+            onCurrencyPickerDismiss = addAccountViewModel::dismissCurrencyPicker,
         )
     }
 
@@ -151,7 +162,7 @@ fun MainScreen(
 @Composable
 fun OfflineBanner(modifier: Modifier = Modifier) {
     Text(
-        text = "Нет подключения к интернету — показаны сохранённые данные",
+        text = stringResource(R.string.offline_banner),
         color = MaterialTheme.colorScheme.onErrorContainer,
         style = MaterialTheme.typography.bodySmall,
         textAlign = TextAlign.Center,

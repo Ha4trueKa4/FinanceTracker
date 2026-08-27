@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,32 +28,34 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val BorderColor = Color(0xFFC4C7C5)
-private val LabelColor = Color(0xFF1D1B20)
-private val ErrorColor = Color(0xFFB3261E)
-
 data class FilterRowStyle(
     val height: Dp = 56.dp,
     val iconSize: Dp = 32.dp,
-    val iconBackground: Color = Color.Transparent,
+    val iconBackground: Color,
     val iconBorderWidth: Dp = 1.dp,
-    val iconTint: Color = Color(0xFF49454F),
-    val badgeTextColor: Color = Color(0xFF49454F),
+    val iconTint: Color,
+    val badgeTextColor: Color,
     val badgeVerticalPadding: Dp = 4.dp,
 )
 
 object FilterRowDefaults {
-    val Default = FilterRowStyle()
+    val Default: FilterRowStyle
+        @Composable get() = FilterRowStyle(
+            iconBackground = Color.Transparent,
+            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+            badgeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-    val Sheet = FilterRowStyle(
-        height = 64.dp,
-        iconSize = 40.dp,
-        iconBackground = Color(0xFFFEF7FF),
-        iconBorderWidth = 0.75.dp,
-        iconTint = Color(0xFF7B5EA7),
-        badgeTextColor = LabelColor,
-        badgeVerticalPadding = 6.dp,
-    )
+    val Sheet: FilterRowStyle
+        @Composable get() = FilterRowStyle(
+            height = 64.dp,
+            iconSize = 40.dp,
+            iconBackground = MaterialTheme.colorScheme.surfaceContainerHighest,
+            iconBorderWidth = 0.75.dp,
+            iconTint = MaterialTheme.colorScheme.primary,
+            badgeTextColor = MaterialTheme.colorScheme.onSurface,
+            badgeVerticalPadding = 6.dp,
+        )
 }
 
 @Composable
@@ -65,8 +68,10 @@ fun FilterRow(
     style: FilterRowStyle = FilterRowDefaults.Default,
     isError: Boolean = false,
 ) {
-    val badgeBorderColor = if (isError) ErrorColor else BorderColor
-    val badgeTextColor = if (isError) ErrorColor else style.badgeTextColor
+    val borderColor = MaterialTheme.colorScheme.outlineVariant
+    val errorColor = MaterialTheme.colorScheme.error
+    val badgeBorderColor = if (isError) errorColor else borderColor
+    val badgeTextColor = if (isError) errorColor else style.badgeTextColor
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -79,7 +84,7 @@ fun FilterRow(
             modifier = Modifier.size(style.iconSize),
             shape = CircleShape,
             color = style.iconBackground,
-            border = BorderStroke(style.iconBorderWidth, BorderColor)
+            border = BorderStroke(style.iconBorderWidth, borderColor)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -97,7 +102,7 @@ fun FilterRow(
             text = label,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
-            color = LabelColor,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
 

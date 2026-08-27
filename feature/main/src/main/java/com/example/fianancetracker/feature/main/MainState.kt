@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.example.fianancetracker.core.ui.model.ListItemModel
 import java.time.LocalDate
@@ -31,12 +32,14 @@ sealed interface TabContent {
 
 enum class MainTab { EXPENSES, INCOMES, ACCOUNTS }
 
-internal val MainTab.title: String
-    get() = when (this) {
-        MainTab.EXPENSES -> "Расходы"
-        MainTab.INCOMES -> "Доходы"
-        MainTab.ACCOUNTS -> "Счета"
+@Composable
+internal fun MainTab.title(): String = stringResource(
+    when (this) {
+        MainTab.EXPENSES -> R.string.tab_expenses
+        MainTab.INCOMES -> R.string.tab_incomes
+        MainTab.ACCOUNTS -> R.string.tab_accounts
     }
+)
 
 @Composable
 internal fun MainTab.icon(): ImageVector = when (this) {

@@ -7,8 +7,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private const val NOT_SELECTED = "Не выбрано"
-
 private val addDateFormatter =
     DateTimeFormatter.ofPattern("d MMMM", Locale.forLanguageTag("ru"))
 private val addTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -43,10 +41,10 @@ data class AddTransactionUiState(
     val form: AddTransactionFormState
         get() = AddTransactionFormState(
             amountText = formatAmount(amountDigits),
-            category = categories.firstOrNull { it.id == selectedCategoryId }?.name ?: NOT_SELECTED,
+            category = categories.firstOrNull { it.id == selectedCategoryId }?.name ?: "",
             dateText = date.format(addDateFormatter),
             timeText = time.format(addTimeFormatter),
-            account = accounts.firstOrNull { it.id == selectedAccountId }?.name ?: NOT_SELECTED,
+            account = accounts.firstOrNull { it.id == selectedAccountId }?.name ?: "",
             comment = comment,
             amountError = showErrors && !amountValid,
             categoryError = showErrors && selectedCategoryId == null,

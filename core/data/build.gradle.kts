@@ -12,6 +12,11 @@ val secrets = Properties().apply {
 
 android {
     namespace = "com.example.fianancetracker.core.data"
+
+    lint {
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
+    }
     compileSdk = 37
 
     defaultConfig {
@@ -46,4 +51,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.security.crypto)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

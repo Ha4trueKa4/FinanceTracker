@@ -11,7 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.fianancetracker.core.ui.R
 import com.example.fianancetracker.core.ui.model.ListItemModel
 
 @Composable
@@ -27,7 +29,7 @@ fun FinanceListContent(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Нет операций",
+                text = stringResource(R.string.empty_no_operations),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -4,11 +4,13 @@ import android.app.Application
 import com.example.fianancetracker.core.data.di.databaseModule
 import com.example.fianancetracker.core.data.di.networkModule
 import com.example.fianancetracker.core.data.di.repositoryModule
+import com.example.fianancetracker.core.data.di.settingsDataModule
 import com.example.fianancetracker.core.data.di.syncModule
 import com.example.fianancetracker.core.data.sync.ConnectivityObserver
 import com.example.fianancetracker.core.data.sync.SyncScheduler
 import com.example.fianancetracker.feature.analytics.di.analyticsModule
 import com.example.fianancetracker.feature.main.di.mainModule
+import com.example.fianancetracker.feature.settings.di.settingsModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,8 +37,10 @@ class FinanceApp : Application() {
                 databaseModule,
                 syncModule,
                 repositoryModule,
+                settingsDataModule,
                 mainModule,
                 analyticsModule,
+                settingsModule,
             )
         }
 

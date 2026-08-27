@@ -21,9 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fianancetracker.feature.main.R
 import com.example.fianancetracker.feature.main.add.common.*
 
 @Composable
@@ -47,7 +49,7 @@ internal fun NameField(
             Box(contentAlignment = Alignment.CenterStart) {
                 if (value.isEmpty()) {
                     Text(
-                        text = "Название",
+                        text = stringResource(R.string.label_name),
                         fontSize = 16.sp,
                         color = if (isError) ErrorColor else LineColor,
                     )
@@ -97,12 +99,12 @@ fun CurrencyPickerSheet(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    PickerScaffold(title = "Валюта", onDismiss = onDismiss) {
+    PickerScaffold(title = stringResource(R.string.label_currency), onDismiss = onDismiss) {
         Currency.entries.forEachIndexed { index, currency ->
             if (index != 0) RowSeparator()
             PickerRow(
                 emoji = currency.symbol,
-                name = currency.title,
+                name = stringResource(currency.titleRes),
                 isSelected = currency.code == selectedCode,
                 onClick = { onSelect(currency.code) },
             )

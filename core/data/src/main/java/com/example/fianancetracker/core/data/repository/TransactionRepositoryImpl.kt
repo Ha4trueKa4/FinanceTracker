@@ -1,11 +1,11 @@
 package com.example.fianancetracker.core.data.repository
 
 import com.example.fianancetracker.core.data.common.apiCall
-import com.example.fianancetracker.core.data.common.bodyOrThrow
-import com.example.fianancetracker.core.data.db.dao.AccountDao
-import com.example.fianancetracker.core.data.db.dao.CategoryDao
-import com.example.fianancetracker.core.data.db.dao.PendingSyncDao
-import com.example.fianancetracker.core.data.db.dao.TransactionDao
+import com.example.fianancetracker.core.data.datasource.local.AccountLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.CategoryLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.PendingSyncLocalDataSource
+import com.example.fianancetracker.core.data.datasource.local.TransactionLocalDataSource
+import com.example.fianancetracker.core.data.datasource.remote.TransactionRemoteDataSource
 import com.example.fianancetracker.core.data.db.entity.CategoryEntity
 import com.example.fianancetracker.core.data.db.entity.PendingSyncEntity
 import com.example.fianancetracker.core.data.db.entity.PendingType
@@ -14,26 +14,27 @@ import com.example.fianancetracker.core.data.db.mapper.toDetails
 import com.example.fianancetracker.core.data.db.mapper.toTransaction
 import com.example.fianancetracker.core.data.mapper.toDetails
 import com.example.fianancetracker.core.data.mapper.toRequestDto
-import com.example.fianancetracker.core.data.network.api.FinanceApi
 import com.example.fianancetracker.core.data.sync.SyncManager
 import com.example.fianancetracker.core.domain.repository.TransactionRepository
 import com.example.fianancetracker.core.domain.transaction.Transaction
 import com.example.fianancetracker.core.domain.transaction.TransactionDetails
 import com.example.fianancetracker.core.domain.transaction.TransactionDraft
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
+import com.example.fianancetracker.core.domain.common.DispatcherProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-class TransactionRepositoryImpl(
-    private val api: FinanceApi,
-    private val transactionDao: TransactionDao,
-    private val accountDao: AccountDao,
-    private val categoryDao: CategoryDao,
-    private val pendingSyncDao: PendingSyncDao,
+/** Репозиторий транзакций: offline-first, локальный источник + очередь + удалённые детали. */
+internal class TransactionRepositoryImpl(
+    private val remote: TransactionRemoteDataSource,
+    private val local: TransactionLocalDataSource,
+    private val accountLocal: AccountLocalDataSource,
+    private val categoryLocal: CategoryLocalDataSource,
+    private val pendingSync: PendingSyncLocalDataSource,
     private val syncManager: SyncManager,
     private val gson: Gson,
+    private val dispatchers: DispatcherProvider,
 ) : TransactionRepository {
 
     override fun observeTransactions(
@@ -41,10 +42,10 @@ class TransactionRepositoryImpl(
         startDate: String,
         endDate: String,
     ): Flow<List<Transaction>> =
-        transactionDao.observeByIncomeBetween(isIncome, startDate, endDate)
+        local.observeByIncomeBetween(isIncome, startDate, endDate)
             .map { list -> list.map { it.toTransaction() } }
 
-    override suspend fun refresh(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun refresh(): Result<Unit> = withContext(dispatchers.io) {
         syncManager.pushPending().fold(
             onSuccess = { syncManager.pullTransactions() },
             onFailure = { Result.failure(it) },
@@ -52,19 +53,19 @@ class TransactionRepositoryImpl(
     }
 
     override suspend fun getTransactionDetails(id: String): Result<TransactionDetails> =
-        withContext(Dispatchers.IO) {
-            val local = transactionDao.getByLocalId(id.toLong())
-            if (local != null) return@withContext Result.success(local.toDetails())
+        withContext(dispatchers.io) {
+            val cached = local.getByLocalId(id.toLong())
+            if (cached != null) return@withContext Result.success(cached.toDetails())
 
-            apiCall { api.getTransactionById(id.toLong()).bodyOrThrow().toDetails() }
+            apiCall { remote.getById(id.toLong()).toDetails() }
         }
 
     override suspend fun createTransaction(draft: TransactionDraft): Result<Unit> =
-        withContext(Dispatchers.IO) {
-            val account = accountDao.getById(draft.accountId)
-            val category = categoryDao.getById(draft.categoryId)
+        withContext(dispatchers.io) {
+            val account = accountLocal.getById(draft.accountId)
+            val category = categoryLocal.getById(draft.categoryId)
 
-            val localId = transactionDao.insert(
+            val localId = local.insert(
                 entityFor(
                     localId = 0,
                     serverId = null,
@@ -79,13 +80,13 @@ class TransactionRepositoryImpl(
         }
 
     override suspend fun updateTransaction(id: String, draft: TransactionDraft): Result<Unit> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             val localId = id.toLong()
-            val existing = transactionDao.getByLocalId(localId)
-            val account = accountDao.getById(draft.accountId)
-            val category = categoryDao.getById(draft.categoryId)
+            val existing = local.getByLocalId(localId)
+            val account = accountLocal.getById(draft.accountId)
+            val category = categoryLocal.getById(draft.categoryId)
 
-            transactionDao.update(
+            local.update(
                 entityFor(
                     localId = localId,
                     serverId = existing?.serverId,
@@ -121,7 +122,7 @@ class TransactionRepositoryImpl(
     )
 
     private suspend fun enqueue(type: PendingType, targetId: Long, draft: TransactionDraft) {
-        pendingSyncDao.insert(
+        pendingSync.insert(
             PendingSyncEntity(
                 type = type.name,
                 targetId = targetId,

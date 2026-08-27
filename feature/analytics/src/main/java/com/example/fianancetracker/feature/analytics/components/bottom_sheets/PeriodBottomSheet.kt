@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,7 +62,7 @@ fun PeriodBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
@@ -82,7 +81,7 @@ fun PeriodBottomSheet(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF1D1B20).copy(alpha = 0.4f))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
 
@@ -90,7 +89,7 @@ fun PeriodBottomSheet(
                 text = "Период",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
             )
 
@@ -117,14 +116,14 @@ fun PeriodBottomSheet(
                             text = label,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1D1B20)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         if (isCustom) {
                             Text(
                                 text = customRangeLabel,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Normal,
-                                color = Color(0xFF49454F)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -135,7 +134,7 @@ fun PeriodBottomSheet(
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
-                                tint = Color(0xFF7B5EA7),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(checkSize)
                             )
                         } else {
@@ -160,7 +159,7 @@ fun PeriodBottomSheet(
                     .padding(horizontal = 16.dp)
                     .height(52.dp),
                 shape = RoundedCornerShape(100),
-                color = Color(0xFF6750A4)
+                color = MaterialTheme.colorScheme.primary
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -172,7 +171,7 @@ fun PeriodBottomSheet(
                         text = "Готово",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

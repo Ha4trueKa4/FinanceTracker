@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -26,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,7 +47,7 @@ fun DetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
@@ -66,7 +66,7 @@ fun DetailBottomSheet(
                     modifier = Modifier
                         .size(width = 32.dp, height = 4.dp)
                         .clip(RoundedCornerShape(100))
-                        .background(Color(0xFFC4C7C5))
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
             }
 
@@ -74,7 +74,7 @@ fun DetailBottomSheet(
                 text = "Детализация",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
             )
 
@@ -111,14 +111,14 @@ fun DetailBottomSheet(
                         text = "Всего за период",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF49454F),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                     Text(
                         text = totalFormatted,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1D1B20),
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -160,7 +160,7 @@ private fun DetailCategoryRow(slice: PieChartSlice) {
                 text = slice.label,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1D1B20),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
 
@@ -168,7 +168,7 @@ private fun DetailCategoryRow(slice: PieChartSlice) {
                 text = "${slice.amountText} (${slice.percentText})",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF49454F)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -179,7 +179,7 @@ private fun DetailCategoryRow(slice: PieChartSlice) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(100))
-                .background(Color(0xFFC4C7C5))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier

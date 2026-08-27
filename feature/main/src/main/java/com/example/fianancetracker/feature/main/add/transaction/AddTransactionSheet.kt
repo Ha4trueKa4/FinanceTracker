@@ -18,9 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.fianancetracker.core.ui.components.FilterRow
 import com.example.fianancetracker.core.ui.components.FilterRowDefaults
+import com.example.fianancetracker.core.ui.components.NumericKeyboard
 import com.example.fianancetracker.feature.main.R
 import com.example.fianancetracker.feature.main.add.common.*
 
@@ -119,13 +121,14 @@ fun AddTransactionSheetContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        FilterRow(painterResource(R.drawable.ic_form_category), "Статья", state.category, onCategoryClick, style = FilterRowDefaults.Sheet, isError = state.categoryError)
+        val notSelected = stringResource(R.string.not_selected)
+        FilterRow(painterResource(R.drawable.ic_form_category), stringResource(R.string.label_category), state.category.ifEmpty { notSelected }, onCategoryClick, style = FilterRowDefaults.Sheet, isError = state.categoryError)
         RowDivider()
-        FilterRow(painterResource(R.drawable.ic_form_date), "Дата", state.dateText, onDateClick, style = FilterRowDefaults.Sheet)
+        FilterRow(painterResource(R.drawable.ic_form_date), stringResource(R.string.label_date), state.dateText, onDateClick, style = FilterRowDefaults.Sheet)
         RowDivider()
-        FilterRow(painterResource(R.drawable.ic_form_date), "Время", state.timeText, onTimeClick, style = FilterRowDefaults.Sheet)
+        FilterRow(painterResource(R.drawable.ic_form_date), stringResource(R.string.label_time), state.timeText, onTimeClick, style = FilterRowDefaults.Sheet)
         RowDivider()
-        FilterRow(painterResource(R.drawable.ic_form_account), "Счёт", state.account, onAccountClick, style = FilterRowDefaults.Sheet, isError = state.accountError)
+        FilterRow(painterResource(R.drawable.ic_form_account), stringResource(R.string.label_account), state.account.ifEmpty { notSelected }, onAccountClick, style = FilterRowDefaults.Sheet, isError = state.accountError)
         RowDivider()
         CommentField(value = state.comment, onValueChange = onCommentChange, isError = state.commentError)
         RowDivider()
